@@ -165,6 +165,7 @@ if "Botanical Architectures" in active_volume:
         
         st.markdown("**XY Footprint View (Phyllotactic Growth Rings)**")
         st.scatter_chart(df, x="Coordinate_X", y="Coordinate_Y", color="Frequency (Hz)", size="Node")
+
     with col_r:
         st.markdown("**Acoustic Trajectory Players:**")
         for idx, row in df.iterrows():
@@ -174,7 +175,7 @@ if "Botanical Architectures" in active_volume:
 else:
     st.markdown("### Active Module: Fluid Hydrotherapy Infusion Trajectories")
     
-    col_input1, col_input2 = st.columns()
+    col_input1, col_input2 = st.columns(2)
     with col_input1:
         user_raw_input = st.text_input(
             "Input Custom Bath Chain Sequence:", 
@@ -197,7 +198,7 @@ else:
         if clean_glyph in CHORD_REGISTRY:
             freq_list = CHORD_REGISTRY[clean_glyph]
             desc_tag = f"HARMONIZED OVERLAP CHORD ({len(freq_list)} tones)"
-            base_freq = freq_list[0]
+            base_freq = freq_list
         else:
             meta = TUNING_SHEET.get(clean_glyph, {"freq": 174.0, "desc": "Pooling Flow"})
             freq_list = [meta["freq"]]
@@ -205,7 +206,10 @@ else:
             base_freq = meta["freq"]
             
         viscosity = 1.45 if clean_glyph == "or" else (0.89 if clean_glyph == "ct" else 1.00)
-        ratio_scalar = base_freq / 174.0
+        
+        # Safe extraction for single frequencies or mixed chord variations
+        reference_pitch = freq_list[0] if isinstance(freq_list, list) else freq_list
+        ratio_scalar = reference_pitch / 174.0
         duration = 1.25 if has_delimiter else 0.70
         
         current_velocity += (ratio_scalar / viscosity) * 0.15
@@ -235,4 +239,27 @@ else:
         st.dataframe(df_fluid.drop(columns=["Frequencies_Mixed"]), use_container_width=True, hide_index=True)
         
         # CSV Data Export Widget Component Installation
-        st.download_button(label="💾 Download Fluid Hydrotherapy Track as CSV",data=df_fluid.drop(columns=["Frequencies_Mixed"]).to_csv(index=False).encode('utf-8'),file_name="voynich_hydrotherapy_trajectory.csv",mime="text/csv")st.markdown("Hydrotherapy Concentric Radial Field Plot")st.scatter_chart(df_fluid, x="Fluid_X", y="Fluid_Y", color="Temperature (°C)", size="Step")with col_r:st.markdown("#### Mixed Chords Matrix Output Panel")for idx, row in df_fluid.iterrows():with st.expander(f"💧 Phase {row['Step']}: '{row['Hydro_Glyph']}' ({row['Infusion Type']})"):valid_audio_uri = generate_valid_wav_payload(row["Frequencies_Mixed"], duration=row["Duration (s)"])st.audio(valid_audio_uri, format="audio/wav")GLOBAL SCIENTIFIC INTEGRITY INDICATORSst.sidebar.header("🔬 Model Integrity Checks")st.sidebar.markdown("---")st.sidebar.metric(label="Target Dicot Alignment (D_JS)", value="0.000511", delta="-0.0379 vs Null")st.sidebar.metric(label="Archimedean Fit Score (R²)", value="0.8975", delta="+0.747 vs Base")st.sidebar.markdown("---")st.sidebar.caption("Restoration Environment Locked © 2026 Hope Jones Framework")
+        st.download_button(
+            label="💾 Download Fluid Hydrotherapy Track as CSV",
+            data=df_fluid.drop(columns=["Frequencies_Mixed"]).to_csv(index=False).encode('utf-8'),
+            file_name="voynich_hydrotherapy_trajectory.csv",
+            mime="text/csv"
+        )
+        
+        st.markdown("**Hydrotherapy Concentric Radial Field Plot**")
+        st.scatter_chart(df_fluid, x="Fluid_X", y="Fluid_Y", color="Temperature (°C)", size="Step")
+
+    with col_r:
+        st.markdown("#### Mixed Chords Matrix Output Panel")
+        for idx, row in df_fluid.iterrows():
+            with st.expander(f"💧 Phase {row['Step']}: '{row['Hydro_Glyph']}' ({row['Infusion Type']})"):
+                valid_audio_uri = generate_valid_wav_payload(row["Frequencies_Mixed"], duration=row["Duration (s)"])
+                st.audio(valid_audio_uri, format="audio/wav")
+
+# GLOBAL SCIENTIFIC INTEGRITY INDICATORS
+st.sidebar.header("🔬 Model Integrity Checks")
+st.sidebar.markdown("---")
+st.sidebar.metric(label="Target Dicot Alignment (D_JS)", value="0.000511", delta="-0.0379 vs Null")
+st.sidebar.metric(label="Archimedean Fit Score (R²)", value="0.8975", delta="+0.747 vs Base")
+st.sidebar.markdown("---")
+st.sidebar.caption("Restoration Environment Locked © 2026 Hope Jones Framework")
