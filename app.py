@@ -167,17 +167,14 @@ def run_single_simulation(args):
     return np.mean(row_js)
 
 # =====================================================================
-# 4. SIDEBAR CONTROLS & ACTIONS
+# 4. SIDEBAR CONTROLS & ACTIONS WITH UNIQUE ELEMENT IDS
 # =====================================================================
 st.sidebar.header("🛠️ Experimental Parameters")
 iterations = st.sidebar.slider("Monte Carlo Iterations", min_value=100, max_value=2000, value=500, step=100)
 learning_rate = st.sidebar.slider("Adaptive Learning Rate (α)", min_value=0.01, max_value=0.50, value=0.10, step=0.01)
 
-if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run"):
-    with st.spinner("Streaming repositories and processing transition spaces..."):
-        tokens = OnlineDataIngestionEngine.fetch_voynich_tokens()
-        edges = OnlineDataIngestionEngine.fetch_tomato_graph()
-if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run"):
+# Enforce a persistent widget key anchor to completely prevent StreamlitDuplicateElementId errors
+if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run", key="execute_pipeline_run_btn"):
     with st.spinner("Streaming repositories and processing transition spaces..."):
         tokens = OnlineDataIngestionEngine.fetch_voynich_tokens()
         edges = OnlineDataIngestionEngine.fetch_tomato_graph()
@@ -192,21 +189,19 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run"):
         row_js = [jensenshannon(M_V[i], M_P[i]) for i in range(3)]
         observed_djs = np.mean(row_js)
         
-        # FIX: Execute simulations safely via sequential execution loop 
-        # to guarantee execution stability under the Streamlit runtime thread model.
+        # Execute simulations inside a stable container context to prevent id collision errors
         null_dist_list = []
-        progress_bar = st.progress(0, text="Evaluating Monte Carlo Null Distribution...")
+        progress_placeholder = st.sidebar.empty()
         
         for i in range(iterations):
             sim_arg = (i, tokens, pipeline.states_order, M_P)
             trial_result = run_single_simulation(sim_arg)
             null_dist_list.append(trial_result)
             
-            # Dynamically push updates to UI thread safely
             if (i + 1) % max(1, iterations // 10) == 0:
-                progress_bar.progress((i + 1) / iterations, text=f"Processing Simulation Run {i+1}/{iterations}...")
+                progress_placeholder.text(f"Running MC Trial: {i+1}/{iterations}")
                 
-        progress_bar.empty()
+        progress_placeholder.empty()
         null_dist = np.array(null_dist_list)
         
         p_value = np.mean(null_dist <= observed_djs)
@@ -223,6 +218,13 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run"):
             "Fit Loss": float(residual)
         })
         
-        # Save checkpoints out to the disk filesystem
         save_system_checkpoint(st.session_state.cumulative_weights, st.session_state.experience_log)
         st.success("Analysis cycle completed! Local weight arrays calibrated and auto-saved.")
+
+# Set a separate key anchor for the secondary state mutation command
+if st.sidebar.button("🗑️ Clear Checkpoint Matrix History", key="clear_checkpoint_history_btn"):
+    if os.path.exists(CHECKPOINT_FILE):
+        os.remove(CHECKPOINT_FILE)
+    st.session_state.experience_log = []
+    st.session_state.cumulative_weights = {"CONTINUATION": 1.0, "BRANCHING": 1.0, "TERMINATION": 1.0}
+    st.rerun()
