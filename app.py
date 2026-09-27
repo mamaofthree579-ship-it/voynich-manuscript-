@@ -177,6 +177,10 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run"):
     with st.spinner("Streaming repositories and processing transition spaces..."):
         tokens = OnlineDataIngestionEngine.fetch_voynich_tokens()
         edges = OnlineDataIngestionEngine.fetch_tomato_graph()
+if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run"):
+    with st.spinner("Streaming repositories and processing transition spaces..."):
+        tokens = OnlineDataIngestionEngine.fetch_voynich_tokens()
+        edges = OnlineDataIngestionEngine.fetch_tomato_graph()
         
         pipeline = TransitionPipeline()
         voynich_states = [pipeline.map_voynich_state(t) for t in tokens]
@@ -188,11 +192,23 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run"):
         row_js = [jensenshannon(M_V[i], M_P[i]) for i in range(3)]
         observed_djs = np.mean(row_js)
         
-        sim_args = [(i, tokens, pipeline.states_order, M_P) for i in range(iterations)]
-        with ProcessPoolExecutor() as executor:
-            null_dist = list(executor.map(run_single_simulation, sim_args))
+        # FIX: Execute simulations safely via sequential execution loop 
+        # to guarantee execution stability under the Streamlit runtime thread model.
+        null_dist_list = []
+        progress_bar = st.progress(0, text="Evaluating Monte Carlo Null Distribution...")
+        
+        for i in range(iterations):
+            sim_arg = (i, tokens, pipeline.states_order, M_P)
+            trial_result = run_single_simulation(sim_arg)
+            null_dist_list.append(trial_result)
             
-        null_dist = np.array(null_dist)
+            # Dynamically push updates to UI thread safely
+            if (i + 1) % max(1, iterations // 10) == 0:
+                progress_bar.progress((i + 1) / iterations, text=f"Processing Simulation Run {i+1}/{iterations}...")
+                
+        progress_bar.empty()
+        null_dist = np.array(null_dist_list)
+        
         p_value = np.mean(null_dist <= observed_djs)
         spiral_params, residual = fit_spiral_geometry(M_V)
         
@@ -210,161 +226,3 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run"):
         # Save checkpoints out to the disk filesystem
         save_system_checkpoint(st.session_state.cumulative_weights, st.session_state.experience_log)
         st.success("Analysis cycle completed! Local weight arrays calibrated and auto-saved.")
-
-if st.sidebar.button("🗑️ Clear Checkpoint Matrix History"):
-    if os.path.exists(CHECKPOINT_FILE):
-        os.remove(CHECKPOINT_FILE)
-    st.session_state.experience_log = []
-    st.session_state.cumulative_weights = {"CONTINUATION": 1.0, "BRANCHING": 1.0, "TERMINATION": 1.0}
-    st.rerun()
-
-# =====================================================================
-# 5. DIAGNOSTIC DASHBOARD RENDER VISUALIZATIONS
-# =====================================================================
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("Systemic Continuous Learning Epochs", len(st.session_state.experience_log))
-with col2:
-    current_djs = st.session_state.experience_log[-1]["D_JS"] if st.session_state.experience_log else 0.0
-    st.metric("Latest Structural Divergence (D_JS)", f"{current_djs:.4f}")
-with col3:
-    current_p = st.session_state.experience_log[-1]["p-value"] if st.session_state.experience_log else 1.0
-    st.metric("Empirical Verification Status", "SIGNIFICANT" if current_p < 0.001 else "REJECTED H1", f"p={current_p:.4f}")
-
-# =====================================================================
-# 5. DIAGNOSTIC DASHBOARD RENDER VISUALIZATIONS
-# =====================================================================
-if st.session_state.experience_log:
-    df_log = pd.DataFrame(st.session_state.experience_log)
-    
-    # Establish distinct diagnostic evaluation tabs for structured separation
-    tab1, tab2, tab3 = st.tabs([
-        "📊 Statistical Distribution", 
-        "🌀 Spiral Space Trajectory", 
-        "🧠 Adaptive State Network Matrix Weights"
-    ])
-    
-    with tab1:
-        st.subheader("Empirical Null Distribution Evaluation vs. Observed Value")
-        
-        # Instantiate a robust matplotlib figure wrapper with precise styling bounds
-        fig, ax = plt.subplots(figsize=(10, 4))
-        plt.style.use('dark_background')
-        fig.patch.set_facecolor('#1A202C')
-        ax.set_facecolor('#2D3748')
-        
-        # Safely capture live execution simulation tracking data arrays
-        if 'null_dist' in locals() and len(null_dist) > 0:
-            distribution_data = null_dist
-        else:
-            # Consistent structural fallback to protect canvas rendering
-            distribution_data = np.random.normal(loc=0.35, scale=0.04, size=1000)
-            
-        # Draw the context-preserving multi-order null baseline distribution
-        ax.hist(
-            distribution_data, 
-            bins=40, 
-            alpha=0.75, 
-            color='#319795', 
-            edgecolor='#1A202C', 
-            label="Context-Preserved Null H₀ (Permuted Structure)"
-        )
-        
-        # Mark the critical observed cross-system empirical threshold line
-        ax.axvline(
-            current_djs, 
-            color='#E53E3E', 
-            linestyle='--', 
-            linewidth=2.5, 
-            label=f"Observed Systemic D_JS Divergence ({current_djs:.4f})"
-        )
-        
-        ax.set_xlabel("Jensen-Shannon Divergence Profile Value", color='#EDF2F7', fontsize=10)
-        ax.set_ylabel("Monte Carlo Density Occurrence Frequency", color='#EDF2F7', fontsize=10)
-        ax.grid(True, linestyle=':', alpha=0.3, color='#EDF2F7')
-        ax.legend(loc="upper right", framealpha=0.9)
-        
-        # Direct clean buffer execution draw to Streamlit
-        st.pyplot(fig)
-        plt.close(fig)
-        
-    with tab2:
-        st.subheader("MDS State Matrix Transition Coordinates & Geometry")
-        
-        fig, ax = plt.subplots(figsize=(6, 6))
-        plt.style.use('dark_background')
-        fig.patch.set_facecolor('#1A202C')
-        ax.set_facecolor('#2D3748')
-        
-        # Generate the parametric ideal spiral overlay matching the system variables
-        if 'spiral_params' in locals():
-            a, b, omega = spiral_params
-        else:
-            a, b, omega = 0.05, 1.1, 0.25
-            
-        theta_eval = np.linspace(0, 6 * np.pi, 200)
-        r_eval = a * (np.abs(omega * theta_eval) ** b)
-        
-        x_spiral = r_eval * np.cos(theta_eval)
-        y_spiral = r_eval * np.sin(theta_eval)
-        
-        # Plot continuous parametric spiral curve matching optimization criteria
-        ax.plot(x_spiral, y_spiral, color='#319795', linestyle='-', linewidth=2, label="Fitted Ideal Geometry r(θ)")
-        
-        # Generate a distinct structural coordinate projection trace path map surface
-        np.random.seed(42)
-        mock_points = np.random.uniform(-0.4, 0.4, size=(5, 2))
-        
-        ax.scatter(
-            mock_points[:, 0], 
-            mock_points[:, 1], 
-            color='#DD6B20', 
-            s=120, 
-            edgecolor='white', 
-            linewidth=1.5, 
-            zorder=5, 
-            label="Projected States"
-        )
-        
-        # Concurrently trace the linear state progression path vector lines
-        ax.plot(
-            mock_points[:, 0], 
-            mock_points[:, 1], 
-            color='#DD6B20', 
-            linestyle=':', 
-            alpha=0.6, 
-            linewidth=1.5
-        )
-        
-        ax.set_xlabel("MDS Dimensional Axis Profile 1", color='#EDF2F7', fontsize=10)
-        ax.set_ylabel("MDS Dimensional Axis Profile 2", color='#EDF2F7', fontsize=10)
-        ax.axhline(0, color='gray', linewidth=0.5, alpha=0.3)
-        ax.axvline(0, color='gray', linewidth=0.5, alpha=0.3)
-        ax.grid(True, linestyle=':', alpha=0.2, color='#EDF2F7')
-        ax.legend(loc="lower left", framealpha=0.9)
-        
-        st.pyplot(fig)
-        plt.close(fig)
-        
-    with tab3:
-        st.subheader("Calibrated System Bias Network Vector Array")
-        
-        col_left, col_right = st.columns(2)
-        with col_left:
-            st.markdown("#### Cumulative Feedback Calibration Weights")
-            st.json(st.session_state.cumulative_weights)
-            
-            # Export active dashboard checkpoint configurations back out to local disk paths
-            json_string = json.dumps(st.session_state.cumulative_weights, indent=4)
-            st.download_button(
-                label="📥 Export Weights Checkpoint JSON File",
-                data=json_string,
-                file_name="calibrated_weights.json",
-                mime="application/json"
-            )
-            
-        with col_right:
-            st.markdown("#### Complete Epoch Execution History Tracker Logs")
-            st.dataframe(df_log, use_container_width=True)
-else:
-    st.info("💡 Adjust parameters in the sidebar and trigger the online run pipeline to execute the structural computation.")
