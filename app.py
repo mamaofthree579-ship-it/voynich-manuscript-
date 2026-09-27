@@ -396,10 +396,52 @@ if st.session_state.experience_log:
         st.pyplot(fig)
         plt.close(fig)
         
-    # ─── TAB 3: NETWORK MATRIX WEIGHTS ───────────────────────────────────────
+    # ─── TAB 3: NETWORK MATRIX WEIGHTS & TREND TRACKER ───────────────────────
     with tab3:
-        st.subheader("Calibrated System Bias Network Vector Array")
+        st.subheader("Calibrated System Bias Network Vector Array & Performance Trend")
         
+        # ─── EPOCH PERFORMANCE TRENDLINE GRAPH ───────────────────────────────
+        st.markdown("#### Structural Divergence (D_JS) History Curve")
+        
+        fig, ax = plt.subplots(figsize=(10, 3))
+        plt.style.use('dark_background')
+        
+        fig.patch.set_facecolor('#1A202C')
+        ax.set_facecolor('#2D3748')
+        
+        # Plot the dynamic historical divergence track sequence
+        ax.plot(
+            df_log["Run"], 
+            df_log["D_JS"], 
+            color='#319795', 
+            marker='o', 
+            linewidth=2, 
+            markersize=6,
+            label="Observed D_JS Transition Loss"
+        )
+        
+        # Track historical variance bounds using a horizontal running baseline average
+        mean_djs_history = df_log["D_JS"].mean()
+        ax.axhline(
+            mean_djs_history, 
+            color='#DD6B20', 
+            linestyle=':', 
+            alpha=0.8, 
+            label=f"Running Metric Mean ({mean_djs_history:.4f})"
+        )
+        
+        ax.set_xlabel("Pipeline Execution Run (Epoch Index)", color='#EDF2F7', fontsize=9)
+        ax.set_ylabel("Jensen-Shannon Divergence", color='#EDF2F7', fontsize=9)
+        ax.set_xticks(df_log["Run"])  # Force integer step ticks on horizontal layout axis
+        ax.grid(True, linestyle=':', alpha=0.2, color='#EDF2F7')
+        ax.legend(loc="upper right")
+        
+        st.pyplot(fig)
+        plt.close(fig)
+        
+        st.markdown("---")
+        
+        # ─── SUMMARY DETAILS GRID PANELS ─────────────────────────────────────
         col_left, col_right = st.columns(2)
         
         with col_left:
@@ -411,12 +453,10 @@ if st.session_state.experience_log:
                 label="📥 Export Weights Checkpoint JSON File",
                 data=json_string,
                 file_name="calibrated_weights.json",
-                mime="application/json"
+                mime="application/json",
+                key="export_weights_download_btn"
             )
             
         with col_right:
             st.markdown("#### Complete Epoch Execution History Tracker Logs")
             st.dataframe(df_log, use_container_width=True)
-
-else:
-    st.info("💡 Adjust parameters in the sidebar and trigger the online run pipeline to execute the structural computation.")
