@@ -1,0 +1,24 @@
+import json
+import os
+
+CHECKPOINT_FILE = "calibrated_weights_checkpoint.json"
+
+def save_system_checkpoint(weights, log_history):
+    """Serializes optimization matrices and historical tracking epochs to disk."""
+    checkpoint_data = {
+        "cumulative_weights": weights,
+        "experience_log": log_history
+    }
+    with open(CHECKPOINT_FILE, "w") as f:
+        json.dump(checkpoint_data, f, indent=4)
+
+def load_system_checkpoint():
+    """Restores prior state histories to preserve continuous learning metrics."""
+    if os.path.exists(CHECKPOINT_FILE):
+        try:
+            with open(CHECKPOINT_FILE, "r") as f:
+                data = json.load(f)
+                return data.get("cumulative_weights"), data.get("experience_log", [])
+        except Exception:
+            pass
+    return None, []
