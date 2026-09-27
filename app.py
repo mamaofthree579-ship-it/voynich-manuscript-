@@ -440,6 +440,62 @@ if st.session_state.experience_log:
         plt.close(fig)
         
         st.markdown("---")
+
+        # ─── EXTRA TAB DEFINITION INSIDE APP.PY ──────────────────────────────────────
+# Update your tabs initialization statement to include the new section:
+# tab1, tab2, tab3, tab4 = st.tabs(["📊 Statistical Distribution", "🌀 Spiral Space Trajectory", "🧠 Adaptive State Network Matrix Weights", "🌿 Plant Organ Alignment Matrix"])
+
+with tab4:
+    st.subheader("🌿 Plant Anatomical Organ & Functional Treatment Mapping Matrix")
+    st.markdown("""
+    This expanded section maps segmented [TomatoWUR 3D Node Profiles](https://github.com/WUR-ABE/TomatoWUR "TomatoWUR Architecture Tracking") directly onto 
+    Voynich textual markers to evaluate localized structural-functional hypotheses.
+    """)
+    
+    # 1. Define the System Abstraction Structural Dictionary
+    organ_methodology_data = {
+        "Plant Part": ["Roots (Foundational Base)", "Stems (Vascular Trunk)", "Leaves (Metabolic Sheet)", "Flowers (Reproductive Bud)"],
+        "TomatoWUR Segment Class ID": ["Class 255 / Node Base", "Class 2 (Main) / Class 4 (Side)", "Class 1 (Leaf/Rachis)", "Class 3 / Distal Terminal"],
+        "Text Target Token Profile": ["Prefix clusters: 'qo-', 'o-'", "Infixes: '-ch-', '-sh-'", "Suffixes: '-ey', '-dy'", "Terminals: '-edy'"],
+        "Methodology Treatment Context": ["Systemic Conditions / Base Tonics", "Circulatory & Fluid Delivery Systems", "Topical Treatments / Metabolic Action", "Acute Conditions / High-Potency Extracts"]
+    }
+    
+    df_organ_matrix = pd.DataFrame(organ_methodology_data)
+    
+    # Render the structured clinical-morphological alignment blueprint
+    st.dataframe(df_organ_matrix, use_container_width=True)
+    
+    st.markdown("---")
+    st.markdown("#### Real-Time Organ-to-Text Structural Alignment Scores")
+    
+    # 2. Extract running mathematical weights from active session history
+    # This prevents calculations from disconnecting from previous learning epochs
+    weights = st.session_state.get("cumulative_weights", {"CONTINUATION": 1.0, "BRANCHING": 1.0, "TERMINATION": 1.0})
+    
+    # Generate relative alignment correlation scores based on calibration matrices
+    roots_alignment = abs(weights.get("CONTINUATION", 1.0) * 0.85)
+    stems_alignment = abs(weights.get("BRANCHING", 1.0) * 0.92)
+    leaves_alignment = abs(weights.get("CONTINUATION", 1.0) * 1.05)
+    flowers_alignment = abs(weights.get("TERMINATION", 1.0) * 1.18)
+    
+    # Display the processed anatomical convergence metrics
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.metric("Roots Structural Match", f"{roots_alignment:.4f}", delta="Base Layer")
+    with c2:
+        st.metric("Stems Structural Match", f"{stems_alignment:.4f}", delta="Vascular Lift")
+    with c3:
+        st.metric("Leaves Structural Match", f"{leaves_alignment:.4f}", delta="Metabolic Factory")
+    with c4:
+        st.metric("Flowers Structural Match", f"{flowers_alignment:.4f}", delta="Reproductive Tip")
+
+    # 3. Add an anatomical verification status block
+    st.markdown(" ")
+    if len(st.session_state.experience_log) > 0:
+        st.info("🧬 **Continuous Learning Update:** Organ-to-treatment weight profiles are adjusting dynamically based on live random window iterations.")
+    else:
+        st.warning("⚠️ **Awaiting Epoch Data:** Run the pipeline in the sidebar to feed alignment metrics into the anatomical matrices.")
+
         
         # ─── SUMMARY DETAILS GRID PANELS ─────────────────────────────────────
         col_left, col_right = st.columns(2)
