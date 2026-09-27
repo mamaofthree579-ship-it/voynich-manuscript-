@@ -168,14 +168,16 @@ if "Botanical Architectures" in active_volume:
 
     with col_r:
         st.markdown("**Acoustic Trajectory Players:**")
+        # AUDIO DURATION SLIDER: Adjusts individual botanical sound playback speeds dynamically
+        duration_mult = st.slider("Adjust Botanical Playback Speed Multiplier:", 0.5, 2.0, 1.0, 0.1)
         for idx, row in df.iterrows():
             with st.expander(f"🔊 Node {row['Node']}: {row['Glyph']} ({row['Frequency (Hz)']} Hz)"):
-                st.audio(generate_valid_wav_payload([row["Frequency (Hz)"]], duration=row["Duration (s)"]), format="audio/wav")
+                st.audio(generate_valid_wav_payload([row["Frequency (Hz)"]], duration=row["Duration (s)"] * duration_mult), format="audio/wav")
 
 else:
-    st.markdown("### Active Module: Fluid Hydrotherapy Infusion Trajectories")
+    st.markdown("### Active Module: Fluid Hydrotherapy Infusion Trajectories & Cosmological Radial Vectors")
     
-    col_input1, col_input2 = st.columns(2)
+    col_input1, col_input2, col_input3 = st.columns(3)
     with col_input1:
         user_raw_input = st.text_input(
             "Input Custom Bath Chain Sequence:", 
@@ -183,6 +185,9 @@ else:
         )
     with col_input2:
         enable_fold_hinge = st.checkbox("Trigger Multi-Panel Page Fold Hinge", value=False)
+    with col_input3:
+        # COSMOLOGICAL GEOMETRY TOGGLE: Projects text trajectories across concentric map spokes
+        project_cosmo_wheel = st.checkbox("Project as 16-Spoke Cosmological Concentric Wheel", value=False)
         
     bath_sequence = [g.strip().lower() for g in user_raw_input.split() if g.strip()]
     fluid_records = []
@@ -198,7 +203,7 @@ else:
         if clean_glyph in CHORD_REGISTRY:
             freq_list = CHORD_REGISTRY[clean_glyph]
             desc_tag = f"HARMONIZED OVERLAP CHORD ({len(freq_list)} tones)"
-            base_freq = freq_list
+            base_freq = freq_list[0]
         else:
             meta = TUNING_SHEET.get(clean_glyph, {"freq": 174.0, "desc": "Pooling Flow"})
             freq_list = [meta["freq"]]
@@ -206,19 +211,32 @@ else:
             base_freq = meta["freq"]
             
         viscosity = 1.45 if clean_glyph == "or" else (0.89 if clean_glyph == "ct" else 1.00)
-        
-        # Safe extraction for single frequencies or mixed chord variations
-        reference_pitch = freq_list[0] if isinstance(freq_list, list) else freq_list
-        ratio_scalar = reference_pitch / 174.0
+        ratio_scalar = base_freq / 174.0
         duration = 1.25 if has_delimiter else 0.70
         
         current_velocity += (ratio_scalar / viscosity) * 0.15
         accumulated_volume += current_velocity * 0.5
         thermal_energy += math.sin(idx * math.pi / 4.0) * (ratio_scalar - 1.0) * 1.5
         
-        f_x = accumulated_volume * math.cos(idx * 0.4)
-        f_y = accumulated_volume * math.sin(idx * 0.4)
-        f_z = thermal_energy * -0.1
+        # Branch math path to compute Concentric Cosmological Wheel Geometries
+        if project_cosmo_wheel:
+            # Alternate concentric ring depths (0 to 3) based on parsing indices
+            ring_depth = idx % 4
+            radius = 50.0 + (ring_depth * 45.0) + accumulated_volume
+            
+            # Lock coordinates to standard 16-spoke cosmological wheel intervals (22.5 degrees)
+            angle_deg = (idx * 22.5) % 360.0
+            angle_rad = math.radians(angle_deg)
+            
+            f_x = radius * math.cos(angle_rad)
+            f_y = radius * math.sin(angle_rad)
+            f_z = thermal_energy * -0.1
+            desc_tag += f" [COSMO RING LAYER {ring_depth}]"
+        else:
+            # Fallback to standard hydrotherapy continuous flow modeling
+            f_x = accumulated_volume * math.cos(idx * 0.4)
+            f_y = accumulated_volume * math.sin(idx * 0.4)
+            f_z = thermal_energy * -0.1
         
         if enable_fold_hinge and idx >= 4:
             f_x_transformed = f_x * 0.0 + f_z * 1.0
@@ -246,14 +264,16 @@ else:
             mime="text/csv"
         )
         
-        st.markdown("**Hydrotherapy Concentric Radial Field Plot**")
+        st.markdown("**Trajectory Plotting Interface Window**")
         st.scatter_chart(df_fluid, x="Fluid_X", y="Fluid_Y", color="Temperature (°C)", size="Step")
 
     with col_r:
         st.markdown("#### Mixed Chords Matrix Output Panel")
+        # DYNAMIC DURATION SLIDER: Adjusts hydrotherapy duration thresholds in real-time
+        fluid_duration_mult = st.slider("Adjust Hydrotherapy Flow Duration Multiplier:", 0.5, 2.0, 1.0, 0.1)
         for idx, row in df_fluid.iterrows():
             with st.expander(f"💧 Phase {row['Step']}: '{row['Hydro_Glyph']}' ({row['Infusion Type']})"):
-                valid_audio_uri = generate_valid_wav_payload(row["Frequencies_Mixed"], duration=row["Duration (s)"])
+                valid_audio_uri = generate_valid_wav_payload(row["Frequencies_Mixed"], duration=row["Duration (s)"] * fluid_duration_mult)
                 st.audio(valid_audio_uri, format="audio/wav")
 
 # GLOBAL SCIENTIFIC INTEGRITY INDICATORS
