@@ -1,0 +1,115 @@
+{
+  "project": "Voynich Restoration Project (Hope Jones)",
+  "tuning_matrix_applied": "True Just-Intonation 174Hz Base",
+  "global_metrics": {
+    "target_dicot_alignment_jsd": 0.000511,
+    "control_monocot_alignment_jsd": 0.038419,
+    "geometric_trajectory_fit_r2": 0.897532
+  },
+  "bibliography_registry": {
+    "VOL_1": "The Voynich Codex Decoded: Plants, Remedies, and Cosmic Harmony",
+    "VOL_2": "The Book of Secrets: Volume 2 - Observing Multi-System Signatures",
+    "VOL_3": "The Voynich Bath Codex: Hydrotherapy, Infusion Systems, and Healing Protocols"
+  },
+  "trajectory_nodes": [
+    {
+      "node_index": 0,
+      "glyph_token": "ORIGIN",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 174.0,
+      "ratio_fraction": "1:1",
+      "coordinates": [0.000000, 0.000000, 0.000000]
+    },
+    {
+      "node_index": 1,
+      "glyph_token": "qo",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 174.0,
+      "ratio_fraction": "1:1",
+      "coordinates": [0.160000, 0.000000, -0.096000]
+    },
+    {
+      "node_index": 2,
+      "glyph_token": "ka",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 233.0,
+      "ratio_fraction": "67:50",
+      "coordinates": [0.077673, 0.227289, -0.142512]
+    },
+    {
+      "node_index": 3,
+      "glyph_token": "dy",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 294.0,
+      "ratio_fraction": "49:29",
+      "coordinates": [-0.004289, -0.051214, -0.088610]
+    },
+    {
+      "node_index": 4,
+      "glyph_token": "ri",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 261.0,
+      "ratio_fraction": "3:2",
+      "coordinates": [0.243385, 0.061214, -0.088610]
+    },
+    {
+      "node_index": 5,
+      "glyph_token": "ae",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 322.0,
+      "ratio_fraction": "87:47",
+      "coordinates": [0.093414, -0.187311, -0.155418]
+    },
+    {
+      "node_index": 6,
+      "glyph_token": "ya",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 365.0,
+      "ratio_fraction": "86:41",
+      "coordinates": [0.187342, 0.101235, -0.122114]
+    },
+    {
+      "node_index": 7,
+      "glyph_token": "ny",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 400.0,
+      "ratio_fraction": "108:47",
+      "coordinates": [-0.081124, 0.041154, -0.066412]
+    },
+    {
+      "node_index": 8,
+      "glyph_token": "ly",
+      "source_volume": "The Voynich Codex Decoded (Hope Jones)",
+      "folio_tag": "f1r",
+      "frequency_hz": 433.0,
+      "ratio_fraction": "107:43",
+      "coordinates": [0.114321, -0.115432, -0.198421]
+    },
+    {
+      "node_index": 9,
+      "glyph_token": "or",
+      "source_volume": "The Voynich Bath Codex (Hope Jones)",
+      "folio_tag": "f78r",
+      "frequency_hz": 164.5,
+      "ratio_fraction": "329:348",
+      "coordinates": [0.054311, -0.211432, -0.312045]
+    },
+    {
+      "node_index": 10,
+      "glyph_token": "ct",
+      "source_volume": "The Voynich Bath Codex (Hope Jones)",
+      "folio_tag": "f78r",
+      "frequency_hz": 357.0,
+      "ratio_fraction": "119:58",
+      "coordinates": [-0.143210, 0.098432, -0.287411]
+    }
+  ]
+}
