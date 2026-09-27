@@ -201,7 +201,7 @@ if "Botanical Architectures" in active_volume:
         duration_mult = st.slider("Adjust Botanical Playback Speed Multiplier:", 0.5, 2.0, 1.0, 0.1)
         for idx, row in df.iterrows():
             with st.expander(f"🔊 Node {row['Node']}: {row['Glyph']} ({row['Frequency (Hz)']} Hz)"):
-                st.audio(generate_valid_wav_payload([row["Frequency (Hz)"]], duration=row["Duration (s)"] * duration_mult), format="audio/wav")
+                st.audio(generate_binaural_wav_payload([row["Frequency (Hz)"]], pan_position=0.0, duration=row["Duration (s)"] * duration_mult), format="audio/wav")
 
 else:
     st.markdown("### Active Module: Fluid Hydrotherapy Infusion Trajectories & Cosmological Radial Vectors")
@@ -214,18 +214,16 @@ else:
     with col_input3:
         project_cosmo_wheel = st.checkbox("Project as 16-Spoke Cosmological Concentric Wheel", value=False)
         
-    bath_sequence = tokenize_manuscript_string(user_raw_input), 1),
-            "Duration (s)": round(duration, 2), "Structure": meta["desc"],
-            "Coordinate_X": round(x_curr, 4), "Coordinate_Y": round(y_curr, 4), "Coordinate_Z": round(z_curr, 4)
-        })
-    df = pd.DataFrame(records)
+    bath_sequence = tokenize_manuscript_string(user_raw_input)
+    fluid_records = []
     
     col_l, col_r = st.columns(2)
     with col_l:
         st.dataframe(df, use_container_width=True, hide_index=True)
         st.download_button(
             label="💾 Download Active Coordinate Track as CSV", 
-            data=df.to_csv(index=False).encode('utf-8'), 
+            data=df.to_csv(index=
+                           False).encode('utf-8'), 
             file_name="voynich_botanical_trajectory.csv", 
             mime="text/csv"
         )
