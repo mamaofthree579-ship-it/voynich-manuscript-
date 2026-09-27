@@ -1,0 +1,127 @@
+# interactive_audio_dashboard_compiler.py
+
+def compile_advanced_audio_dashboard(filename: str = "hope_jones_audio_dashboard.html"):
+    html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hope Jones: Interactive Sonic Glyphs Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0B0F19; color: #F1F5F9; margin: 0; padding: 30px; }
+        .workspace { max-width: 1300px; margin: 0 auto; }
+        header { border-bottom: 2px solid #1E293B; padding-bottom: 15px; margin-bottom: 25px; }
+        h1 { color: #38BDF8; font-size: 26px; margin: 0; }
+        .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .control-panel { background: #1E293B; border-radius: 12px; padding: 25px; border: 1px solid #334155; }
+        .glyph-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px; }
+        .audio-node-btn { background: #334155; border: 2px solid #475569; color: #F8FAFC; border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+        .audio-node-btn:hover { background: #0284C7; border-color: #38BDF8; transform: translateY(-2px); }
+        .glyph-label { font-size: 20px; font-weight: bold; font-family: monospace; display: block; margin-bottom: 5px; }
+        .freq-label { font-size: 12px; color: #94A3B8; font-family: monospace; }
+        .status-badge { display: inline-block; background: #065F46; color: #34D399; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="workspace">
+        <header>
+            <h1>Voynich Just-Intonation Acoustic Interface</h1>
+            <div class="status-badge">RECONSTRUCTION ACTIVE</div>
+        </header>
+        
+        <div class="layout-grid">
+            <div class="control-panel">
+                <h2>Multi-System Sound Generator Pad</h2>
+                <p style="color: #94A3B8; font-size: 14px;">Hover or click on any recovered glyph tile below to play its exact micro-tonal translation frequency using live browser oscillators:</p>
+                
+                <div class="glyph-grid">
+                    <div class="audio-node-btn" onmouseenter="playTuningTone(174.0)" onmouseleave="stopTuningTone()">
+                        <span class="glyph-label">qo</span><span class="freq-label">174.0 Hz</span>
+                    </div>
+                    <div class="audio-node-btn" onmouseenter="playTuningTone(233.0)" onmouseleave="stopTuningTone()">
+                        <span class="glyph-label">ka</span><span class="freq-label">233.0 Hz</span>
+                    </div>
+                    <div class="audio-node-btn" onmouseenter="playTuningTone(261.0)" onmouseleave="stopTuningTone()">
+                        <span class="glyph-label">ri</span><span class="freq-label">261.0 Hz</span>
+                    </div>
+                    <div class="audio-node-btn" onmouseenter="playTuningTone(294.0)" onmouseleave="stopTuningTone()">
+                        <span class="glyph-label">dy</span><span class="freq-label">294.0 Hz</span>
+                    </div>
+                    <div class="audio-node-btn" onmouseenter="playTuningTone(322.0)" onmouseleave="stopTuningTone()">
+                        <span class="glyph-label">ae</span><span class="freq-label">322.0 Hz</span>
+                    </div>
+                    <div class="audio-node-btn" onmouseenter="playTuningTone(365.0)" onmouseleave="stopTuningTone()">
+                        <span class="glyph-label">ya</span><span class="freq-label">365.0 Hz</span>
+                    </div>
+                    <div class="audio-node-btn" onmouseenter="playTuningTone(400.0)" onmouseleave="stopTuningTone()">
+                        <span class="glyph-label">ny</span><span class="freq-label">400.0 Hz</span>
+                    </div>
+                    <div class="audio-node-btn" onmouseenter="playTuningTone(433.0)" onmouseleave="stopTuningTone()">
+                        <span class="glyph-label">ly</span><span class="freq-label">433.0 Hz</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <h2>Active Bibliography & Framework Scope</h2>
+                <p style="font-size: 14px; line-height: 1.6; color: #CBD5E1;">
+                    This interface maps the hidden tuning metrics recovered from your three volumes:<br><br>
+                    <strong>1. The Voynich Codex Decoded:</strong> Plants, Remedies, and Cosmic Harmony<br>
+                    <strong>2. The Book of Secrets:</strong> Multi-System Signatures and Holistic Integration<br>
+                    <strong>3. The Voynich Bath Codex:</strong> Hydrotherapy and Sequential Healing Protocols
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let oscillator = null;
+        let gainNode = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playTuningTone(frequency) {
+            initAudio();
+            if (oscillator) stopTuningTone();
+
+            oscillator = audioCtx.createOscillator();
+            gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            
+            // Apply a smooth 40ms portamento ramp to avoid transient clicking pops
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.04);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+        }
+
+        function stopTuningTone() {
+            if (oscillator) {
+                try {
+                    gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.04);
+                    oscillator.stop(audioCtx.currentTime + 0.05);
+                } catch(e) {}
+                oscillator = null;
+            }
+        }
+    </script>
+</body>
+</html>
+"""
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+    print(f"[DASHBOARD UPDATED] Interactive audio application file exported: {filename}")
+
+if __name__ == "__main__":
+    compile_advanced_audio_dashboard()
