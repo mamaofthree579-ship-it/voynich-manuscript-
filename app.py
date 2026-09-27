@@ -295,10 +295,11 @@ with col3:
 if st.session_state.experience_log:
     df_log = pd.DataFrame(st.session_state.experience_log)
     
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "📊 Statistical Distribution", 
         "🌀 Spiral Space Trajectory", 
-        "🧠 Adaptive State Network Matrix Weights"
+        "🧠 Adaptive State Network Matrix Weights",
+        "🌷 Plant Anatomical Organ & Functional Treatment Mapping Matrix"
     ])
     
     # ─── TAB 1: STATISTICAL DISTRIBUTION ─────────────────────────────────────
