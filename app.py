@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import math
 import base64
+import re
 
 # Enforce clean application page configurations instantly on launch
 st.set_page_config(
@@ -13,7 +14,7 @@ st.set_page_config(
 
 st.title("Hope Jones: Multi-System Reconstruction Workspace")
 
-# --- MASTER TRANSLATION & ARCHITECTURAL REGISTRY ---
+# --- MASTER TRANSLATION & GEOMETRIC REGISTRY ---
 TUNING_SHEET = {
     "qo": {"freq": 174.0, "ratio": "1:1", "desc": "Root Foundation Anchor"},
     "ka": {"freq": 233.0, "ratio": "67:50", "desc": "Internal Node Propagation"},
@@ -34,27 +35,30 @@ CHORD_REGISTRY = {
     "shey": [174.0, 261.0, 522.0]
 }
 
-# --- HERBAL INDEX DATASTORE (REMEDIES FROM BOOK 1) ---
 HERBAL_REMEDY_INDEX = {
     "Infusion Core A (Thermal Balancer)": {
-        "folio_range": "f1r - f12r",
-        "primary_glyphs": "qo -> ka -> ri",
-        "botanical_action": "Meristem expansion stabilization",
-        "remedy_classification": "Holistic Metabolic Equalizer"
+        "folio_range": "f1r - f12r", "primary_glyphs": "qo -> ka -> ri",
+        "botanical_action": "Meristem expansion stabilization", "classification": "Metabolic Equalizer"
     },
     "Vortex System B (Phyllotactic Extract)": {
-        "folio_range": "f22v - f34r",
-        "primary_glyphs": "dy -> ya -> ly",
-        "botanical_action": "Branch/axial cell fluid acceleration",
-        "remedy_classification": "Circulatory & Tissue Regeneration Protocol"
+        "folio_range": "f22v - f34r", "primary_glyphs": "dy -> ya -> ly",
+        "botanical_action": "Branch/axial cell fluid acceleration", "classification": "Tissue Regeneration"
     },
     "Concentric Healing Compound C (Deep Tissue)": {
-        "folio_range": "f45r - f52v",
-        "primary_glyphs": "or -> ct -> edy",
-        "botanical_action": "Meristem tissue compression boundary formation",
-        "remedy_classification": "Anti-inflammatory Matrix Purifier"
+        "folio_range": "f45r - f52v", "primary_glyphs": "or -> ct -> edy",
+        "botanical_action": "Meristem tissue compression boundary", "classification": "Anti-inflammatory Matrix"
     }
 }
+
+# --- EXTENSION 1: HEURISTIC GLYPH TOKENIZER MATRIX ---
+def tokenize_manuscript_string(raw_text: str) -> list:
+    """
+    Cleans raw, user-submitted sentences by stripping unaligned spacing, 
+    isolating structural tokens, and preserving boundary delimiters.
+    """
+    cleaned = re.sub(r"[^a-zA-Z\s\.]", "", raw_text)
+    words = [w.strip().lower() for w in cleaned.split() if w.strip()]
+    return words
 
 # --- RIFF/WAVE AUDIO CONTAINER SYNTHESIZER ---
 def generate_valid_wav_payload(frequencies: list, duration=0.8, sample_rate=22050):
@@ -109,13 +113,27 @@ active_volume = st.selectbox(
     ]
 )
 
+# --- EXTENSION 2: CURRIER SCRIPTORIUM MODULATOR PANEL ---
+st.sidebar.header("✒️ Scriptorium Hand Profiles")
+selected_hand = st.sidebar.radio(
+    "Select Transcribing Scribe Style:",
+    ["Standard Baseline", "Currier Hand A (Subdued)", "Currier Hand B (Bright)"]
+)
+
+# Define micro-tonal and tempo modifiers based on scribal hand
+if selected_hand == "Currier Hand A (Subdued)":
+    hand_tempo, hand_pitch_shift, hand_label = 1.25, -5.0, " [Currier A Profile Active]"
+elif selected_hand == "Currier Hand B (Bright)":
+    hand_tempo, hand_pitch_shift, hand_label = 0.90, 5.0, " [Currier B Profile Active]"
+else:
+    hand_tempo, hand_pitch_shift, hand_label = 1.00, 0.0, ""
+
 if "Botanical Architectures" in active_volume:
-    st.markdown("### Active Module: Botanical Structural Trajectories")
+    st.markdown(f"### Active Module: Botanical Structural Trajectories{hand_label}")
     
-    # Render Hierarchical Remedy Index Layout Section
     st.markdown("#### Volume 1: Historic Herbal Remedy Reference Index")
     for remedy, details in HERBAL_REMEDY_INDEX.items():
-        with st.expander(f"🌿 {remedy} [{details['remedy_classification']}]"):
+        with st.expander(f"🌿 {remedy} [{details['classification']}]"):
             col_a, col_b = st.columns(2)
             with col_a:
                 st.markdown(f"**Folio Range:** {details['folio_range']}")
@@ -127,7 +145,7 @@ if "Botanical Architectures" in active_volume:
     st.markdown("#### Input Custom Botanical Text String:")
     user_bot_input = st.text_input("Type space-separated glyphs:", value="qo ka dy ri ae ya ny ly qo. dy ri ly.")
     
-    raw_tokens = [t.strip().lower() for t in user_bot_input.split() if t.strip()]
+    raw_tokens = tokenize_manuscript_string(user_bot_input)
     records = []
     x_curr, y_curr, z_curr = 0.0, 0.0, 0.0
     
@@ -136,8 +154,10 @@ if "Botanical Architectures" in active_volume:
         clean_glyph = token.replace('.', '')
         
         meta = TUNING_SHEET.get(clean_glyph, {"freq": 174.0, "ratio": "1:1", "desc": "Anchor"})
-        ratio_scalar = meta["freq"] / 174.0
-        duration = 0.85 if has_delimiter else 0.40
+        
+        adjusted_frequency = meta["freq"] + hand_pitch_shift
+        ratio_scalar = adjusted_frequency / 174.0
+        duration = (0.85 if has_delimiter else 0.40) * hand_tempo
         
         theta = idx * (137.5 * math.pi / 180.0)
         x_curr += ratio_scalar * 0.4 * math.cos(theta)
@@ -145,8 +165,8 @@ if "Botanical Architectures" in active_volume:
         z_curr += -0.08 * idx * ratio_scalar
         
         records.append({
-            "Node": idx, "Glyph": clean_glyph, "Frequency (Hz)": meta["freq"],
-            "Duration (s)": duration, "Structure": meta["desc"],
+            "Node": idx, "Glyph": clean_glyph, "Frequency (Hz)": round(adjusted_frequency, 1),
+            "Duration (s)": round(duration, 2), "Structure": meta["desc"],
             "Coordinate_X": round(x_curr, 4), "Coordinate_Y": round(y_curr, 4), "Coordinate_Z": round(z_curr, 4)
         })
     df = pd.DataFrame(records)
@@ -155,7 +175,6 @@ if "Botanical Architectures" in active_volume:
     with col_l:
         st.dataframe(df, use_container_width=True, hide_index=True)
         
-        # CSV Data Export Widget Component Installation
         st.download_button(
             label="💾 Download Active Coordinate Track as CSV",
             data=df.to_csv(index=False).encode('utf-8'),
@@ -165,10 +184,9 @@ if "Botanical Architectures" in active_volume:
         
         st.markdown("**XY Footprint View (Phyllotactic Growth Rings)**")
         st.scatter_chart(df, x="Coordinate_X", y="Coordinate_Y", color="Frequency (Hz)", size="Node")
-
+        
     with col_r:
         st.markdown("**Acoustic Trajectory Players:**")
-        # AUDIO DURATION SLIDER: Adjusts individual botanical sound playback speeds dynamically
         duration_mult = st.slider("Adjust Botanical Playback Speed Multiplier:", 0.5, 2.0, 1.0, 0.1)
         for idx, row in df.iterrows():
             with st.expander(f"🔊 Node {row['Node']}: {row['Glyph']} ({row['Frequency (Hz)']} Hz)"):
@@ -186,10 +204,9 @@ else:
     with col_input2:
         enable_fold_hinge = st.checkbox("Trigger Multi-Panel Page Fold Hinge", value=False)
     with col_input3:
-        # COSMOLOGICAL GEOMETRY TOGGLE: Projects text trajectories across concentric map spokes
         project_cosmo_wheel = st.checkbox("Project as 16-Spoke Cosmological Concentric Wheel", value=False)
         
-    bath_sequence = [g.strip().lower() for g in user_raw_input.split() if g.strip()]
+    bath_sequence = tokenize_manuscript_string(user_raw_input)
     fluid_records = []
     
     current_velocity = 0.0
@@ -201,39 +218,35 @@ else:
         clean_glyph = token.replace('.', '')
         
         if clean_glyph in CHORD_REGISTRY:
-            freq_list = CHORD_REGISTRY[clean_glyph]
+            freq_list = [f + hand_pitch_shift for f in CHORD_REGISTRY[clean_glyph]]
             desc_tag = f"HARMONIZED OVERLAP CHORD ({len(freq_list)} tones)"
             base_freq = freq_list[0]
         else:
             meta = TUNING_SHEET.get(clean_glyph, {"freq": 174.0, "desc": "Pooling Flow"})
-            freq_list = [meta["freq"]]
+            freq_list = [meta["freq"] + hand_pitch_shift]
             desc_tag = meta.get("desc", "Fluid Step")
-            base_freq = meta["freq"]
+            base_freq = freq_list[0]
             
-        viscosity = 1.45 if clean_glyph == "or" else (0.89 if clean_glyph == "ct" else 1.00)
-        ratio_scalar = base_freq / 174.0
-        duration = 1.25 if has_delimiter else 0.70
+                # Fluid Dynamics calculation loop
+        # Note: If base_freq is a chord list, extract the first element for fluid math scalar
+        scalar_pitch = base_freq[0] if isinstance(base_freq, list) else base_freq
+        ratio_scalar = scalar_pitch / 174.0
+        duration = (1.25 if has_delimiter else 0.70) * hand_tempo
         
         current_velocity += (ratio_scalar / viscosity) * 0.15
         accumulated_volume += current_velocity * 0.5
         thermal_energy += math.sin(idx * math.pi / 4.0) * (ratio_scalar - 1.0) * 1.5
         
-        # Branch math path to compute Concentric Cosmological Wheel Geometries
         if project_cosmo_wheel:
-            # Alternate concentric ring depths (0 to 3) based on parsing indices
             ring_depth = idx % 4
             radius = 50.0 + (ring_depth * 45.0) + accumulated_volume
-            
-            # Lock coordinates to standard 16-spoke cosmological wheel intervals (22.5 degrees)
             angle_deg = (idx * 22.5) % 360.0
             angle_rad = math.radians(angle_deg)
-            
             f_x = radius * math.cos(angle_rad)
             f_y = radius * math.sin(angle_rad)
             f_z = thermal_energy * -0.1
             desc_tag += f" [COSMO RING LAYER {ring_depth}]"
         else:
-            # Fallback to standard hydrotherapy continuous flow modeling
             f_x = accumulated_volume * math.cos(idx * 0.4)
             f_y = accumulated_volume * math.sin(idx * 0.4)
             f_z = thermal_energy * -0.1
@@ -246,7 +259,7 @@ else:
             
         fluid_records.append({
             "Step": idx, "Hydro_Glyph": clean_glyph, "Infusion Type": desc_tag,
-            "Frequencies_Mixed": freq_list, "Duration (s)": duration,
+            "Frequencies_Mixed": freq_list, "Duration (s)": round(duration, 2),
             "Velocity (m/s)": round(current_velocity, 3), "Temperature (°C)": round(thermal_energy, 1),
             "Fluid_X": round(f_x, 4), "Fluid_Y": round(f_y, 4), "Fluid_Z": round(f_z, 4)
         })
@@ -269,7 +282,6 @@ else:
 
     with col_r:
         st.markdown("#### Mixed Chords Matrix Output Panel")
-        # DYNAMIC DURATION SLIDER: Adjusts hydrotherapy duration thresholds in real-time
         fluid_duration_mult = st.slider("Adjust Hydrotherapy Flow Duration Multiplier:", 0.5, 2.0, 1.0, 0.1)
         for idx, row in df_fluid.iterrows():
             with st.expander(f"💧 Phase {row['Step']}: '{row['Hydro_Glyph']}' ({row['Infusion Type']})"):
