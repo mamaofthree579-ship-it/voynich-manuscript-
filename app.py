@@ -214,7 +214,7 @@ else:
     with col_input3:
         project_cosmo_wheel = st.checkbox("Project as 16-Spoke Cosmological Concentric Wheel", value=False)
         
-    bath_sequence = tokenize_manuscript_string(user_raw_input)            , 1),
+    bath_sequence = tokenize_manuscript_string(user_raw_input), 1),
             "Duration (s)": round(duration, 2), "Structure": meta["desc"],
             "Coordinate_X": round(x_curr, 4), "Coordinate_Y": round(y_curr, 4), "Coordinate_Z": round(z_curr, 4)
         })
