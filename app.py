@@ -233,7 +233,7 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run", key="execute_
         # FEATURE 2: Adaptive Learning Decay Operator (α decays dynamically as epoch counts grow)
 current_epoch = len(st.session_state.experience_log) + 1
 decayed_learning_rate = base_learning_rate / (1.0 + 0.05 * current_epoch)
-         for idx, state in enumerate(pipeline.states_order):
+        for idx, state in enumerate(pipeline.states_order):
             error_gradient = np.abs(M_V[idx].mean() - M_P[idx].mean())
             st.session_state.cumulative_weights[state] -= (
                 decayed_learning_rate * error_gradient
