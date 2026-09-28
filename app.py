@@ -194,7 +194,12 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run", key="execute_
         tomato_window_size = min(len(all_edges), 1000)
         
         # Enforce distinct seed window anchors depending on the target folder
-        section_offsets = {"Full Corpus (Global Profile)": 0, "Herbal Section (Leaves Focus)": 1000, "Biological Section (Fluid Pipes)": 2000, "Pharmaceutical Section (Root Jars)": 3000}
+        section_offsets = {
+            "Full Corpus (Global Profile)": 0, 
+            "Herbal Section (Leaves Focus)": 1000, 
+            "Biological Section (Fluid Pipes)": 2000, 
+            "Pharmaceutical Section (Root Jars)": 3000
+        }
         base_offset = section_offsets.get(section_filter, 0)
         
         v_start = (base_offset + random.randint(0, 500)) % (len(all_tokens) - voynich_window_size)
@@ -230,10 +235,11 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run", key="execute_
         p_value = np.mean(null_dist <= observed_djs)
         spiral_params, residual = fit_spiral_geometry(M_V)
         
-        # FEATURE 2: Adaptive Learning Decay Operator (α decays dynamically as epoch counts grow)
-current_epoch = len(st.session_state.experience_log) + 1
-decayed_learning_rate = base_learning_rate / (1.0 + 0.05 * current_epoch)
-for idx, state in enumerate(pipeline.states_order):
+        # ─── ADAPTIVE LEARNING DECAY OPERATOR ────────────────────────────────
+        current_epoch = len(st.session_state.experience_log) + 1
+        decayed_learning_rate = base_learning_rate / (1.0 + 0.05 * current_epoch)
+        
+        for idx, state in enumerate(pipeline.states_order):
             error_gradient = np.abs(M_V[idx].mean() - M_P[idx].mean())
             st.session_state.cumulative_weights[state] -= (
                 decayed_learning_rate * error_gradient
@@ -261,8 +267,3 @@ for idx, state in enumerate(pipeline.states_order):
         st.success(
             f"Analysis cycle completed! Calibrated with decayed α = {decayed_learning_rate:.4f}."
         )
-
-
-# =====================================================================
-# 5. IN-MEMORY PORTFOLIO SANDBOX ADJUSTMENTS
-# =====================================================================
