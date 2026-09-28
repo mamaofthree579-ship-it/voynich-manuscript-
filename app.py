@@ -246,7 +246,7 @@ for idx, state in enumerate(pipeline.states_order):
             "D_JS": float(observed_djs),
             "p-value": float(p_value),
             "Fit Loss": float(residual),
-            "Alpha Used": float(decayed_learning_rate)
+            "Alpha Used": float(decayed_learning_rate)}
         })
         
         st.session_state.latest_null_dist = null_dist.tolist()
