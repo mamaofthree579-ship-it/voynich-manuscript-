@@ -235,7 +235,18 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run", key="execute_
         spiral_params, residual = fit_spiral_geometry(M_V)
         
         # ─── ADAPTIVE LEARNING DECAY OPERATOR ────────────────────────────────
-
+        # ─── ADAPTIVE LEARNING DECAY OPERATOR ────────────────────────────────
+        current_epoch = len(st.session_state.experience_log) + 1
+        decayed_learning_rate = base_learning_rate / (1.0 + 0.05 * current_epoch)
+        
+        for idx, state in enumerate(pipeline.states_order):
+            error_gradient = np.abs(M_V[idx].mean() - M_P[idx].mean())
+            st.session_state.cumulative_weights[state] -= (
+                decayed_learning_rate * error_gradient
+            )
+            
+        # ─── LOG METRIC EVALUATIONS TO APP STATE ─────────────────────────────
+        st.session_state.experience_log.append({
             "Run": current_epoch,
             "Section": section_filter,
             "D_JS": float(observed_djs),
@@ -256,3 +267,8 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run", key="execute_
         st.success(
             f"Analysis cycle completed! Calibrated with decayed α = {decayed_learning_rate:.4f}."
         )
+
+
+# =====================================================================
+# 5. IN-MEMORY PORTFOLIO SANDBOX ADJUSTMENTS
+# =====================================================================
