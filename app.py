@@ -130,7 +130,7 @@ class AdvancedNullGenerator:
         if len(self.tokens) < 3: 
             return list(self.tokens)
         
-        null_seq = [self.tokens[0], self.tokens[1]]
+        null_seq = [self.tokens, self.tokens]
         for _ in range(2, len(self.tokens)):
             context = (null_seq[-2], null_seq[-1])
             if context in self.order_2_map and random.random() > 0.10:
@@ -176,7 +176,6 @@ st.sidebar.header("🛠️ Experimental Parameters")
 iterations = st.sidebar.slider("Monte Carlo Iterations", min_value=100, max_value=2000, value=500, step=100)
 base_learning_rate = st.sidebar.slider("Initial Learning Rate (α₀)", min_value=0.01, max_value=0.50, value=0.10, step=0.01)
 
-# FEATURE 1: Folio-Section Taxonomy Target Filter
 st.sidebar.markdown("---")
 st.sidebar.header("📂 Manuscript Taxonomy Filter")
 section_filter = st.sidebar.selectbox(
@@ -236,17 +235,7 @@ if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run", key="execute_
         spiral_params, residual = fit_spiral_geometry(M_V)
         
         # ─── ADAPTIVE LEARNING DECAY OPERATOR ────────────────────────────────
-        current_epoch = len(st.session_state.experience_log) + 1
-        decayed_learning_rate = base_learning_rate / (1.0 + 0.05 * current_epoch)
-        
-        for idx, state in enumerate(pipeline.states_order):
-            error_gradient = np.abs(M_V[idx].mean() - M_P[idx].mean())
-            st.session_state.cumulative_weights[state] -= (
-                decayed_learning_rate * error_gradient
-            )
-            
-        # ─── LOG METRIC EVALUATIONS TO APP STATE ─────────────────────────────
-        st.session_state.experience_log.append({
+
             "Run": current_epoch,
             "Section": section_filter,
             "D_JS": float(observed_djs),
