@@ -240,7 +240,7 @@ for idx, state in enumerate(pipeline.states_order):
             )
             
         # ─── LOG METRIC EVALUATIONS TO APP STATE ─────────────────────────────
-        st.session_state.experience_log.append(
+        st.session_state.experience_log.append
             "Run": current_epoch,
             "Section": section_filter,
             "D_JS": float(observed_djs),
