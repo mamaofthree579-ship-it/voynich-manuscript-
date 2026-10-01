@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import sqlite3
+import os
 
 # Master Configuration
 st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
