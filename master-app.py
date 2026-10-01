@@ -2,11 +2,27 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import sqlite3
 
 # Master Configuration
 st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
 st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
-st.caption("Final Master Production Build (v4.0.0) | Complete Physics Integration with Live G-Code Toolpath Visualizer.")
+st.caption("Final Master Production Build (v5.0.0) | Complete Physics Integration with Local Database Logging & G-Code Visualization.")
+
+# Initialize Local Database Layer
+conn = sqlite3.connect("temp/voynich_database.db", check_same_thread=False)
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS patient_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        pathology TEXT,
+        fluid_medium TEXT,
+        target_freq REAL,
+        counter_hour TEXT
+    )
+''')
+conn.commit()
 
 # Sidebar - System Configurations
 st.sidebar.header("1. Framework System Mode")
@@ -62,11 +78,13 @@ ambient_temp = st.sidebar.slider("Storage Cellar Temperature (°C)", 0.0, 50.0, 
 
 # --- Automated Physics Processing Engine ---
 if system_mode == "Organ-Tissue Pathology":
+    active_pathology_name = pathology
     if pathology == "Neurological Overdrive (CNS Burnout)": disease_peak = 4
-    elif pathology == "Hepatic Stagnation (Tissue Hardening)": disease_peak = 6
+    elif pathology == "Hepating Stagnation (Tissue Hardening)": disease_peak = 6
     elif pathology == "Respiratory Degradation (Elasticity Loss)": disease_peak = 1
     else: disease_peak = 4
 else:
+    active_pathology_name = system_mode
     disease_peak = 7 if system_mode == "Balneological Fluid Circuits" and "Clover" in pool_geometry else 3
 
 f1 = 440.0 * (plant_a_factor / 0.22)
@@ -90,13 +108,16 @@ amplitude_retention = math.exp(-alpha * storage_months) * 100.0
 
 k_val = 0.2 if vessel_material == "Thick Monastic Clay" else 0.9
 retention_hours = ((wall_thickness / 1000.0) / k_val) * 100.0
-counter_hour = (disease_peak + 4) if disease_peak <= 4 else (disease_peak - 4)
+counter_hour_idx = (disease_peak + 4) if disease_peak <= 4 else (disease_peak - 4)
 
 # Seal Boundary Measurements
 wavelength_mm = (wave_speed / target_freq) * 1000.0
 r1 = 25.0
 r2 = r1 * np.sqrt(2)
 r3 = r1 * 1.618
+
+panels = ["Dawn", "Sunrise", "Morning", "Noon", "Evening", "Sunset", "Dusk", "Midnight", "Core Neutral Anchor"]
+counter_hour_name = panels[counter_hour_idx - 1]
 
 # --- Render UI Dashboard Layout ---
 col1, col2 = st.columns(2)
@@ -132,6 +153,30 @@ with col1:
     ax.set_facecolor('#0e1117'); fig.patch.set_facecolor('#0e1117')
     ax.tick_params(colors='white')
     st.pyplot(fig)
+    
+    # Patient Profile Database Input Block
+    st.markdown("---")
+    st.subheader("💾 Patient Profile Ledger")
+    patient_name = st.text_input("Enter Patient Name/Identifier:")
+    if st.button("Commit Profile to Local Ledger"):
+        if patient_name:
+            cursor.execute('''
+                INSERT INTO patient_profiles (name, pathology, fluid_medium, target_freq, counter_hour)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (patient_name, active_pathology_name, fluid_medium, round(target_freq, 2), counter_hour_name))
+            conn.commit()
+            st.success(f"Profile for '{patient_name}' compiled and secured successfully.")
+        else:
+            st.warning("Please enter a valid patient identifier.")
+            
+    # View Logs
+    if st.checkbox("Show Logged Patient Profiles"):
+        profiles = cursor.execute("SELECT name, pathology, fluid_medium, target_freq, counter_hour FROM patient_profiles").fetchall()
+        if profiles:
+            for p in profiles:
+                st.text(f"👤 {p[0]} | Path: {p[1]} | Med: {p[2]} | Freq: {p[3]}Hz | Time Slot: {p[4]}")
+        else:
+            st.caption("No profiles found in database ledger.")
 
 with col2:
     st.subheader("⏳ G-Code Machine Simulation Preview")
@@ -144,13 +189,9 @@ with col2:
     ax_cnc.set_facecolor('#0e1117')
     fig_cnc.patch.set_facecolor('#0e1117')
     
-    # Plot standard machine origin anchor
-    ax_cnc.scatter([0], [0], color='lime', marker='+', s=150, label='Machine Zero (X0, Y0)')
-    
-    # Simulate Rapid tool feed movement (G00 plunge alignment path)
+    ax_cnc.scatter(0, 0, color='lime', marker='+', s=150, label='Machine Zero (X0, Y0)')
     ax_cnc.plot([0, 0], [0, r3], color='orange', linestyle=':', alpha=0.7, label='G00 Rapid Feed Trajectory')
     
-    # Reconstruct concentric circular interpolation path vectors (G02/G03 loops)
     ax_cnc.plot(r3 * np.cos(theta_vals), r3 * np.sin(theta_vals), color='#FF4B4B', linewidth=1.5, label='Outer Boundary Loop (Damping Rim)')
     ax_cnc.plot(r2 * np.cos(theta_vals), r2 * np.sin(theta_vals), color='teal', linewidth=2.0, label='Middle Circle Loop (Impedance Node)')
     ax_cnc.plot(r1 * np.cos(theta_vals), r1 * np.sin(theta_vals), color='white', linewidth=2.5, label='Inner Circle Loop (Phase Core)')
@@ -163,11 +204,11 @@ with col2:
 
     st.write("#### 🔘 Interactive Triple-Circle Seal SVG Blueprint")
     svg_blueprint = f"""
-    <svg width="100%" height="130" viewBox="0 0 200 200" xmlns="http://w3.org">
+    <svg width="100%" height="150" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <rect width="100%" height="100%" fill="#0e1117"/>
         <circle cx="100" cy="100" r="{r3 * 1.5}" stroke="#FF4B4B" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
         <circle cx="100" cy="100" r="{r2 * 1.5}" stroke="teal" stroke-width="2" fill="none"/>
         <circle cx="100" cy="100" r="{r1 * 1.5}" stroke="white" stroke-width="3" fill="none"/>
     </svg>
     """
-    st.components.v1.html(svg_blueprint, height=140)
+    st.components.v1.html(svg_blueprint, height=160)
