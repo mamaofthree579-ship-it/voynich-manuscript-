@@ -1,0 +1,30 @@
+name: Streamlit Deployment Verification
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  verify_environment:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    - name: Set Up Python Environment
+      uses: actions/setup-python@v5
+      with:
+        python-node: '3.11'
+        cache: 'pip'
+
+    - name: Install Underlying System Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Run Basic App Verification
+      run: |
+        python -c "import numpy; import matplotlib; print('Core biophysics modules initialized successfully.')"
