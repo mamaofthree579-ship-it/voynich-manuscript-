@@ -1,15 +1,16 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 # Master Config
-st.set_page_config(page_title="Voynich Master Bio-Harmonic Engine", layout="wide")
-st.title("📜 Voynich Manuscript Master Bio-Harmonic Engine")
-st.caption("Comprehensive GitHub Build: Integrating Botanical Spirals, Non-Aqueous Fluid Thermodynamics, and Balneological Hydro-Circuits.")
+st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
+st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
+st.caption("Final Master Production Build: Integrating Multi-Plant Compounding, Balneological Hydro-Circuits, and Pharmaceutical Vessels.")
 
 # Sidebar - System Configurations
 st.sidebar.header("1. Framework System Mode")
-system_mode = st.sidebar.selectbox("Select Analysis Matrix", ["Balneological Fluid Circuits", "Organ-Tissue Pathology"])
+system_mode = st.sidebar.selectbox("Select Analysis Matrix", ["Balneological Fluid Circuits", "Organ-Tissue Pathology", "Pharmaceutical Vessel Tuning"])
 
 if system_mode == "Organ-Tissue Pathology":
     pathology = st.sidebar.selectbox("Select Target Tissue System", [
@@ -18,23 +19,24 @@ if system_mode == "Organ-Tissue Pathology":
         "Hepatic Stagnation (Tissue Hardening)",
         "Respiratory Degradation (Elasticity Loss)"
     ])
-else:
+elif system_mode == "Balneological Fluid Circuits":
     st.sidebar.markdown("---")
     st.sidebar.subheader("🌊 Hydro-Circuit Variables")
     pool_geometry = st.sidebar.selectbox("Manuscript Pool Geometry Blueprint", ["Clover Resonator (Folio 78r Preset)", "Semicircle Mixer", "Stepped Cascading Basin"])
-    
-    # Contextual initialization for Folio 78r calculations
-    if "Clover" in pool_geometry:
-        tube_diameter_mm = st.sidebar.slider("Tube Width Metric (D)", 1.0, 10.0, 2.8, step=0.1)
-        flow_velocity_mms = st.sidebar.slider("Biological Flow Velocity (v)", 0.5, 5.0, 1.4, step=0.1)
-    else:
-        tube_diameter_mm = st.sidebar.slider("Tube Width Metric (D)", 1.0, 10.0, 3.5, step=0.1)
-        flow_velocity_mms = st.sidebar.slider("Biological Flow Velocity (v)", 0.5, 5.0, 1.2, step=0.1)
+    tube_diameter_mm = st.sidebar.slider("Tube Width Metric (D)", 1.0, 10.0, 2.8 if "Clover" in pool_geometry else 3.5, step=0.1)
+    flow_velocity_mms = st.sidebar.slider("Biological Flow Velocity (v)", 0.5, 5.0, 1.4 if "Clover" in pool_geometry else 1.2, step=0.1)
+else:
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("⚱️ Vessel Boundary Metrics")
+    vessel_profile = st.sidebar.selectbox("Marginalia Drawing Style", ["Wide Cylindrical Base", "Narrow Tapered Amphora"])
+    vessel_volume_ml = st.sidebar.slider("Calculated Chamber Volume (V)", 50, 1000, 250, step=50)
+    neck_length_mm = st.sidebar.slider("Illustrated Throat Length (L)", 10, 100, 35, step=5)
 
-st.sidebar.header("2. Botanical Compounding Engine")
-compounding_mode = st.sidebar.checkbox("Enable Multi-Plant Compounding", value=False)
+st.sidebar.header("2. Triple-Plant Compounding Engine")
+compounding_tier = st.sidebar.selectbox("Compounding Complexity", ["Single Herb Extract", "Dual-Plant Compounding", "Triple-Plant Envelope"])
 plant_a_factor = st.sidebar.slider("Plant A Spiral Factor", 0.05, 0.50, 0.22, step=0.01)
-plant_b_factor = st.sidebar.slider("Plant B Spiral Factor", 0.05, 0.50, 0.15, step=0.01) if compounding_mode else 0.0
+plant_b_factor = st.sidebar.slider("Plant B Spiral Factor", 0.05, 0.50, 0.15, step=0.01) if compounding_tier != "Single Herb Extract" else 0.0
+plant_c_factor = st.sidebar.slider("Plant C Spiral Factor", 0.05, 0.50, 0.11, step=0.01) if compounding_tier == "Triple-Plant Envelope" else 0.0
 
 st.sidebar.header("3. Medium & Extraction Vehicle")
 fluid_medium = st.sidebar.selectbox("Fluid Extraction Medium", ["Wine/Alcohol Carrier", "Water-Based Infusion", "Infused Vegetable Oil Base"])
@@ -46,20 +48,21 @@ neck_geometry = st.sidebar.selectbox("Neck Geometry (Acoustic Transformer)", ["C
 wall_thickness = st.sidebar.slider("Wall Thickness (mm)", 2.0, 15.0, 8.0, step=0.5)
 ambient_temp = st.sidebar.slider("Storage Cellar Temperature (°C)", 0.0, 50.0, 15.0, step=1.0)
 
-# --- Automated Presets & Dynamic Processing ---
+# --- Automated Presets & Calculations ---
 if system_mode == "Organ-Tissue Pathology":
     if pathology == "Neurological Overdrive (CNS Burnout)": disease_peak = 4
     elif pathology == "Hepatic Stagnation (Tissue Hardening)": disease_peak = 6
     elif pathology == "Respiratory Degradation (Elasticity Loss)": disease_peak = 1
     else: disease_peak = 4
 else:
-    disease_peak = 7 if "Clover" in pool_geometry else 3
+    disease_peak = 7 if system_mode == "Balneological Fluid Circuits" and "Clover" in pool_geometry else 3
 
+# Frequency Calculation Block
 f1 = 440.0 * (plant_a_factor / 0.22)
-f2 = 440.0 * (plant_b_factor / 0.22) if compounding_mode else 0.0
-target_freq = abs(f1 - f2) if compounding_mode else f1
+f2 = 440.0 * (plant_b_factor / 0.22) if compounding_tier != "Single Herb Extract" else 0.0
+f3 = 440.0 * (plant_c_factor / 0.22) if compounding_tier == "Triple-Plant Envelope" else 0.0
 
-# Extraction Base Variable Thermodynamics
+# Base Shifting
 if fluid_medium == "Wine/Alcohol Carrier":
     base_density = 789.0; base_bulk = 1.06e9; optimal_speed = 1162.0
 elif fluid_medium == "Infused Vegetable Oil Base":
@@ -75,45 +78,46 @@ k_val = 0.2 if vessel_material == "Thick Monastic Clay" else 0.9
 retention_hours = ((wall_thickness / 1000.0) / k_val) * 100.0
 counter_hour = (disease_peak + 4) if disease_peak <= 4 else (disease_peak - 4)
 
-# Dynamic Seal Calibration Specs
-wavelength_mm = (wave_speed / target_freq) * 1000.0
+wavelength_mm = (wave_speed / f1) * 1000.0
 r1 = 25.0; r2 = r1 * np.sqrt(2); r3 = r1 * 1.618
 depth1 = (wavelength_mm / 4.0)
 while depth1 > 5.0: depth1 /= 2.0
 
-# --- Render Dashboard UI Layout ---
+# --- Render UI Layout ---
 col1, col2 = st.columns(2)
 
 with col1:
     if system_mode == "Organ-Tissue Pathology":
         st.subheader("📊 Integrated Biophysics Metrics")
-    else:
+    elif system_mode == "Balneological Fluid Circuits":
         st.subheader("🌊 Hydrodynamic Circuit Metrics")
         circuit_freq = (flow_velocity_mms / (2.0 * tube_diameter_mm)) * 1000.0
-        st.metric("Required Fluidic Streaming Frequency", f"{circuit_freq:.1f} Hz")
-        st.caption(f"Geometry Profile: `{pool_geometry}` requiring a **{circuit_freq:.1f} Hz** kinetic surge to open pathways.")
+        st.metric("Streaming Target Freq", f"{circuit_freq:.1f} Hz")
+    else:
+        st.subheader("⚱️ Pharmaceutical Volume Metrics")
+        v_neck = (math.pi * (12.5**2) * neck_length_mm) / 1000.0 # Assuming 25mm throat diameter
+        preservation_coeff = vessel_volume_ml / v_neck
+        st.metric("Acoustic Volume Co-efficient (Γ)", f"{preservation_coeff:.2f}")
 
     m1, m2, m3 = st.columns(3)
-    m1.metric("Medicine Output Freq", f"{target_freq:.1f} Hz")
-    m2.metric("Liquid Wave Velocity", f"{wave_speed:.1f} m/s")
+    m1.metric("Plant A Freq (Base)", f"{f1:.1f} Hz")
+    m2.metric("Liquid Wave Speed", f"{wave_speed:.1f} m/s")
     m3.metric("Insulation Buffer", f"{retention_hours:.1f} Hrs")
 
-    # Dynamic Multi-Mode Wave Graph
-    st.write("#### Acoustic Wave Field Graph")
-    x = np.linspace(0, 10, 500)
-    if system_mode == "Balneological Fluid Circuits" and "Clover" in pool_geometry:
-        # Render an acoustic envelope split representing fluid separation layers
-        active_wave = np.sin(x * 2) * np.cos(x * 0.4)
-        graph_label = "Lobe-Centrifugation Pressure Wave"
+    # Render Superposition Wave Graph
+    st.write("#### Wave Superposition Vector Display")
+    t = np.linspace(0, 0.05, 1000)
+    if compounding_tier == "Single Herb Extract":
+        wave_y = np.sin(2 * np.pi * f1 * t)
+    elif compounding_tier == "Dual-Plant Compounding":
+        wave_y = np.sin(2 * np.pi * f1 * t) + np.sin(2 * np.pi * f2 * t)
     else:
-        k_factor = 1.5 if neck_geometry == "Exponential Flared" else 1.0
-        active_wave = np.sin(x * (2 * np.pi * target_freq / wave_speed)) * np.exp(-x * 0.02 * k_factor)
-        graph_label = "Active Resonator Output Wave"
+        wave_y = np.sin(2 * np.pi * f1 * t) + np.sin(2 * np.pi * f2 * t) + np.sin(2 * np.pi * f3 * t)
     
     fig, ax = plt.subplots(figsize=(6, 3.2))
-    ax.plot(x, active_wave, color="#FF4B4B", label=graph_label)
+    ax.plot(t, wave_y, color="#FF4B4B")
     ax.set_facecolor('#0e1117'); fig.patch.set_facecolor('#0e1117')
-    ax.tick_params(colors='white'); ax.legend(labelcolor='white')
+    ax.tick_params(colors='white')
     st.pyplot(fig)
 
 with col2:
@@ -122,9 +126,9 @@ with col2:
     
     for idx, name in enumerate(panels, 1):
         if idx == disease_peak:
-            st.markdown(f"🔴 **Panel {idx} ({name})** → **Stagnation Peak Profile**")
+            st.markdown(f"🔴 **Panel {idx} ({name})** → **Stagnation Horizon**")
         elif idx == counter_hour:
-            st.markdown(f"🟢 **Panel {idx} ({name})** → **180° Counter-Hour Infusion Vector**")
+            st.markdown(f"🟢 **Panel {idx} ({name})** → **Optimal Delivery Vector**")
         else:
             st.text(f"    ⚪ Panel {idx} ({name})")
 
