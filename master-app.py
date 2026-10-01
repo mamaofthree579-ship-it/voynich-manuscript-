@@ -6,7 +6,7 @@ import math
 # Master Configuration
 st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
 st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
-st.caption("Final Master Production Build (v3.0.0) | Complete Physics Integration of Cosmic, Botanical, and Material Wave Vectors.")
+st.caption("Final Master Production Build (v4.0.0) | Complete Physics Integration with Live G-Code Toolpath Visualizer.")
 
 # Sidebar - System Configurations
 st.sidebar.header("1. Framework System Mode")
@@ -42,7 +42,7 @@ else:
     vessel_volume_ml = st.sidebar.slider("Calculated Chamber Volume (V)", 50, 1000, 250, step=50)
     neck_length_mm = st.sidebar.slider("Illustrated Throat Length (L)", 10, 100, 35, step=5)
 
-st.sidebar.header("2. Botanical Compounding Engine")
+st.sidebar.header("2. Triple-Plant Compounding Engine")
 compounding_tier = st.sidebar.selectbox("Compounding Complexity", ["Single Herb Extract", "Dual-Plant Compounding", "Triple-Plant Envelope"])
 plant_a_factor = st.sidebar.slider("Plant A Spiral Factor", 0.05, 0.50, 0.22, step=0.01)
 plant_b_factor = st.sidebar.slider("Plant B Spiral Factor", 0.05, 0.50, 0.15, step=0.01) if compounding_tier != "Single Herb Extract" else 0.0
@@ -69,12 +69,11 @@ if system_mode == "Organ-Tissue Pathology":
 else:
     disease_peak = 7 if system_mode == "Balneological Fluid Circuits" and "Clover" in pool_geometry else 3
 
-# Base Botanical Frequencies
 f1 = 440.0 * (plant_a_factor / 0.22)
 f2 = 440.0 * (plant_b_factor / 0.22) if compounding_tier != "Single Herb Extract" else 0.0
 f3 = 440.0 * (plant_c_factor / 0.22) if compounding_tier == "Triple-Plant Envelope" else 0.0
+target_freq = abs(f1 - f2 + f3) if compounding_tier == "Triple-Plant Envelope" else (abs(f1 - f2) if compounding_tier == "Dual-Plant Compounding" else f1)
 
-# Extraction Medium Selection Mechanics
 if fluid_medium == "Wine/Alcohol Carrier":
     base_density = 789.0; base_bulk = 1.06e9; optimal_speed = 1162.0
 elif fluid_medium == "Infused Vegetable Oil Base":
@@ -86,18 +85,18 @@ fluid_density = base_density - (0.2 * (ambient_temp - 20))
 bulk_modulus = base_bulk * (1.0 + 0.003 * (ambient_temp - 20))
 wave_speed = np.sqrt(bulk_modulus / fluid_density)
 
-# Damping Decay Calculations
 alpha = 0.02 if closure_type == "Pure Beeswax Hard Plug" else 0.18
 amplitude_retention = math.exp(-alpha * storage_months) * 100.0
 
-# Thermal Retentivity Windows
 k_val = 0.2 if vessel_material == "Thick Monastic Clay" else 0.9
 retention_hours = ((wall_thickness / 1000.0) / k_val) * 100.0
 counter_hour = (disease_peak + 4) if disease_peak <= 4 else (disease_peak - 4)
 
 # Seal Boundary Measurements
-wavelength_mm = (wave_speed / f1) * 1000.0
-r1 = 25.0; r2 = r1 * np.sqrt(2); r3 = r1 * 1.618
+wavelength_mm = (wave_speed / target_freq) * 1000.0
+r1 = 25.0
+r2 = r1 * np.sqrt(2)
+r3 = r1 * 1.618
 
 # --- Render UI Dashboard Layout ---
 col1, col2 = st.columns(2)
@@ -119,22 +118,14 @@ with col1:
         st.metric("Acoustic Volume Co-efficient (Γ)", f"{vessel_volume_ml / v_neck:.2f}")
 
     m1, m2, m3 = st.columns(3)
-    m1.metric("Plant A Freq (Base)", f"{f1:.1f} Hz")
+    m1.metric("Calculated Target Freq", f"{target_freq:.1f} Hz")
     m2.metric("Wave Retention Potency", f"{amplitude_retention:.1f}%")
     m3.metric("Insulation Buffer", f"{retention_hours:.1f} Hrs")
 
-    # Render Final Complex Envelope Superposition Graph
+    # Render Superposition Wave Graph
     st.write("#### Master Modulated Wave Envelope Display")
     t = np.linspace(0, 0.05, 1000)
-    if compounding_tier == "Single Herb Extract":
-        wave_y = np.sin(2 * np.pi * f1 * t)
-    elif compounding_tier == "Dual-Plant Compounding":
-        wave_y = np.sin(2 * np.pi * f1 * t) + np.sin(2 * np.pi * f2 * t)
-    else:
-        wave_y = np.sin(2 * np.pi * f1 * t) + np.sin(2 * np.pi * f2 * t) + np.sin(2 * np.pi * f3 * t)
-    
-    # Scale graph amplitude dynamically according to cap degradation time lapse
-    wave_y *= (amplitude_retention / 100.0)
+    wave_y = np.sin(2 * np.pi * target_freq * t) * (amplitude_retention / 100.0)
     
     fig, ax = plt.subplots(figsize=(6, 3.2))
     ax.plot(t, wave_y, color="#FF4B4B")
@@ -143,24 +134,40 @@ with col1:
     st.pyplot(fig)
 
 with col2:
-    st.subheader("⏳ Cosmological Time Shift Matrix")
-    panels = ["Dawn", "Sunrise", "Morning", "Noon", "Evening", "Sunset", "Dusk", "Midnight", "Core Neutral Anchor"]
+    st.subheader("⏳ G-Code Machine Simulation Preview")
+    st.caption("Live feed tracing tool movements (Rapid movements vs. G02/G03 interpolations) directly inside the seal boundary.")
     
-    for idx, name in enumerate(panels, 1):
-        if idx == disease_peak:
-            st.markdown(f"🔴 **Panel {idx} ({name})** \(\rightarrow\) **Stagnation Horizon**")
-        elif idx == counter_hour:
-            st.markdown(f"🟢 **Panel {idx} ({name})** \(\rightarrow\) **Optimal Delivery Vector**")
-        else:
-            st.text(f"    ⚪ Panel {idx} ({name})")
+    # --- CNC Toolpath Visualizer Component ---
+    theta_vals = np.linspace(0, 2 * np.pi, 200)
+    
+    fig_cnc, ax_cnc = plt.subplots(figsize=(6, 4.2))
+    ax_cnc.set_facecolor('#0e1117')
+    fig_cnc.patch.set_facecolor('#0e1117')
+    
+    # Plot standard machine origin anchor
+    ax_cnc.scatter([0], [0], color='lime', marker='+', s=150, label='Machine Zero (X0, Y0)')
+    
+    # Simulate Rapid tool feed movement (G00 plunge alignment path)
+    ax_cnc.plot([0, 0], [0, r3], color='orange', linestyle=':', alpha=0.7, label='G00 Rapid Feed Trajectory')
+    
+    # Reconstruct concentric circular interpolation path vectors (G02/G03 loops)
+    ax_cnc.plot(r3 * np.cos(theta_vals), r3 * np.sin(theta_vals), color='#FF4B4B', linewidth=1.5, label='Outer Boundary Loop (Damping Rim)')
+    ax_cnc.plot(r2 * np.cos(theta_vals), r2 * np.sin(theta_vals), color='teal', linewidth=2.0, label='Middle Circle Loop (Impedance Node)')
+    ax_cnc.plot(r1 * np.cos(theta_vals), r1 * np.sin(theta_vals), color='white', linewidth=2.5, label='Inner Circle Loop (Phase Core)')
+    
+    ax_cnc.tick_params(colors='white')
+    ax_cnc.axis('equal')
+    ax_cnc.grid(color='gray', linestyle='--', alpha=0.3)
+    ax_cnc.legend(labelcolor='white', loc='lower right', fontsize='small')
+    st.pyplot(fig_cnc)
 
     st.write("#### 🔘 Interactive Triple-Circle Seal SVG Blueprint")
     svg_blueprint = f"""
-    <svg width="100%" height="150" viewBox="0 0 200 200" xmlns="http://w3.org">
+    <svg width="100%" height="130" viewBox="0 0 200 200" xmlns="http://w3.org">
         <rect width="100%" height="100%" fill="#0e1117"/>
         <circle cx="100" cy="100" r="{r3 * 1.5}" stroke="#FF4B4B" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
         <circle cx="100" cy="100" r="{r2 * 1.5}" stroke="teal" stroke-width="2" fill="none"/>
         <circle cx="100" cy="100" r="{r1 * 1.5}" stroke="white" stroke-width="3" fill="none"/>
     </svg>
     """
-    st.components.v1.html(svg_blueprint, height=160)
+    st.components.v1.html(svg_blueprint, height=140)
