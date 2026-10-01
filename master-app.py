@@ -11,6 +11,7 @@ st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
 st.caption("Final Master Production Build (v5.0.0) | Complete Physics Integration with Local Database Logging & G-Code Visualization.")
 
 # Initialize Local Database Layer
+os.makedirs("temp", exist_ok=True)
 conn = sqlite3.connect("temp/voynich_database.db", check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('''
