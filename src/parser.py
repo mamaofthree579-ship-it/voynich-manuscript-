@@ -5,8 +5,8 @@ import re
 
 def parse_voynich_text(file_path, active_section="botanical", format_type="zandbergen_landini", growth_phase="Peak Flowering"):
     """
-    Ingests alternative transcription text models and uses folio metadata markers 
-    to filter transitions, integrating an interactive 3-Phase Maturity Index.
+    Ingests text transcriptions, utilizing advanced multi-token sub-rule sets 
+    to unpack hyphenated joints within the Takahashi corpus format.
     """
     matrix = np.zeros((4, 4), dtype=np.float64)
     
@@ -55,7 +55,11 @@ def parse_voynich_text(file_path, active_section="botanical", format_type="zandb
             
             words = line.split()
             for word in words:
-                word = re.sub(r'[\.\,\?\!\\-\\\=\\*]', '', word).lower()
+                # Clean standard structural errors but preserve hyphens for Takahashi rules
+                if format_type == "takahashi":
+                    word = re.sub(r'[\.\,\?\!\\*]', '', word).lower()
+                else:
+                    word = re.sub(r'[\.\,\?\!\\-\\\=\\*]', '', word).lower()
                 if word:
                     tokens.append(word)
             tokens.append("LINE_BREAK")
@@ -63,8 +67,6 @@ def parse_voynich_text(file_path, active_section="botanical", format_type="zandb
     if not tokens:
         return np.eye(4)
 
-    # 🧪 NEW: 3-Phase Maturity Index weighting rules
-    # Alters state assignment sensitivities based on the specimen's lifecycle stage
     operators = []
     for i in range(len(tokens) - 1):
         curr_token = tokens[i]
@@ -77,19 +79,32 @@ def parse_voynich_text(file_path, active_section="botanical", format_type="zandb
             operators.append(3) # HARVEST_LIMIT
             continue
             
-        # Context-dependent morphological hand-offs
+        # ADVANCED RUN ROUTINE: Scaled Takahashi sub-token evaluation
+        if format_type == "takahashi" and "-" in curr_token:
+            # Explode the compound string along its internal structural boundary joints
+            sub_segments = curr_token.split("-")
+            prefix, suffix = sub_segments[0], sub_segments[-1]
+            
+            # Isolated transition evaluation rules for complex string boundaries
+            if suffix.endswith('edy') or suffix.endswith('ey'):
+                operators.append(2) # GENERATIVE_FLOWER
+            elif prefix.startswith('qo') or prefix.startswith('ot'):
+                operators.append(1) # STEM_CONTINUANCE state reinforcement
+            else:
+                operators.append(0) # ROOT_ZONE fallback
+            continue
+
+        # Standard Parsing Rules (Currier / Zandbergen-Landini Fallbacks)
         is_branch = curr_token.endswith(('dy', 'ey')) and next_token.startswith('qo')
         is_vascular = curr_token.endswith(('d', 'l', 'r', 's', 'n'))
         
         if growth_phase == "Young Vegetative":
-            # Young plants emphasize root stabilization and stalk elongation patterns
-            if is_vascular: operators.append(1) # STEM_CONTINUANCE
-            else: operators.append(0)           # ROOT_ZONE bias
+            if is_vascular: operators.append(1)
+            else: operators.append(0)
         elif growth_phase == "Dried Prep/Storage":
-            # Post-harvest instructions bypass elongation to loop heavily on harvest boundaries
-            if is_branch: operators.append(3)   # HARVEST_LIMIT bias
-            else: operators.append(1)           # STEM_CONTINUANCE
-        else: # Default: Peak Flowering (Standard structural matrix balances)
+            if is_branch: operators.append(3)
+            else: operators.append(1)
+        else:
             if is_branch: operators.append(2)
             elif is_vascular: operators.append(1)
             else: operators.append(0)
