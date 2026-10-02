@@ -41,3 +41,4 @@ def calculate_pharma_compliance(detected_folio, system_r2, derived_temp):
         "optimal_temp": bench["temp"],
         "compliance_score": total_compliance
     }
+
