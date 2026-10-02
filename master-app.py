@@ -58,13 +58,22 @@ cursor = conn.cursor()
 # =====================================================================
 st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
 st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
-st.caption("Production Build (v6.0.0) | Multi-Thread Lock Mitigation & Compliant Markdown Rendering Vectors.")
+st.caption("Production Build (v7.0.0) | Multi-Thread Lock Mitigation & Compliant Markdown Rendering Vectors.")
 
 # --- Database UI Profile Loader ---
 st.sidebar.header("📋 Database Profiles Ledger")
 saved_profiles = cursor.execute("SELECT name FROM profiles").fetchall()
 profile_list = [p[0] for p in saved_profiles]
 selected_profile = st.sidebar.selectbox("Load Reconstructed Archetype:", ["Manual Configuration Input"] + profile_list)
+
+# --- Database Maintenance & Purge Operations ---
+if st.sidebar.button("🚨 Reset Ledger to Factory Presets"):
+    with sqlite3.connect("temp/voynich_database.db", check_same_thread=False) as purge_conn:
+        purge_cursor = purge_conn.cursor()
+        purge_cursor.execute("DROP TABLE IF EXISTS profiles")
+        purge_conn.commit()
+    st.cache_resource.clear()
+    st.rerun()
 
 # Fallback defaults if manual configuration is chosen
 db_system_mode = "Organ-Tissue Pathology"
@@ -208,6 +217,34 @@ with col1:
     ax.set_facecolor('#0e1117'); fig.patch.set_facecolor('#0e1117')
     ax.tick_params(colors='white')
     st.pyplot(fig)
+
+    # --- Live Multi-Plant Compounding Beat Envelope Visualizer ---
+    if compounding_tier != "Single Herb Extract":
+        st.write("#### 🧪 Multi-Plant Compounding Beat Envelope Analysis")
+        st.caption("Visualizing the deep rhythmic modulation pulse (envelope curve) generated via superposition.")
+        
+        t_env = np.linspace(0, 0.1, 1000)
+        env_wave_1 = np.sin(2 * np.pi * f1 * t_env)
+        env_wave_2 = np.sin(2 * np.pi * f2 * t_env)
+        
+        if compounding_tier == "Triple-Plant Envelope":
+            env_wave_3 = np.sin(2 * np.pi * f3 * t_env)
+            combined_raw = env_wave_1 + env_wave_2 + env_wave_3
+            upper_envelope = np.abs(f1 - f2 + f3) / 100.0 + (amplitude_retention / 100.0)
+        else:
+            combined_raw = env_wave_1 + env_wave_2
+            upper_envelope = 2 * np.abs(np.cos(np.pi * (f1 - f2) * t_env)) * (amplitude_retention / 100.0)
+            
+        fig_env, ax_env = plt.subplots(figsize=(6, 2.5))
+        ax_env.plot(t_env, combined_raw * (amplitude_retention / 100.0), color="#FF4B4B", alpha=0.3, label="Combined Raw Signal")
+        if compounding_tier == "Dual-Plant Compounding":
+            ax_env.plot(t_env, upper_envelope, color="teal", linestyle="--", linewidth=1.5, label="Calculated Beat Pulse Outline")
+            ax_env.plot(t_env, -upper_envelope, color="teal", linestyle="--", linewidth=1.5)
+            
+        ax_env.set_facecolor('#0e1117'); fig_env.patch.set_facecolor('#0e1117')
+        ax_env.tick_params(colors='white')
+        ax_env.legend(labelcolor='white', loc='upper right', fontsize='x-small')
+        st.pyplot(fig_env)
 
 with col2:
     st.subheader("⏳ G-Code Machine Simulation Preview")
