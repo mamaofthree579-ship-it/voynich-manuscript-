@@ -1,4 +1,3 @@
-# Save as your root app.py file
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -17,9 +16,9 @@ from src.geometry import generate_trajectory, project_to_spiral_space
 st.set_page_config(page_title="Voynich Agricultural Engine", layout="wide")
 st.title("🌿 Voynich Operational Herbal: Lifecycle Transition Engine")
 st.write(
-    "Testing the manuscript as an active **agricultural cultivation manual**. "
-    "This pipeline maps positional word transitions against the explicit "
-    "growth phases of a plant: Root Development, Stem Elongation, and Generative Harvesting."
+    "Testing the manuscript as an active **multi-metric agricultural manual**. "
+    "This pipeline maps positional word transitions against both physical growth phases "
+    "and bio-harmonic wave mechanics."
 )
 
 # -----------------------------------------------------------------------------
@@ -51,11 +50,20 @@ transcription_format = st.sidebar.selectbox(
 )
 
 st.sidebar.divider()
-st.sidebar.header("⚙️ Simulation Settings")
+st.sidebar.header("⚙️ Biophysics & Simulation Settings")
 num_sim_perms = st.sidebar.slider("Monte Carlo Shuffling Runs", 500, 5000, 1500, step=500)
 window_len = st.sidebar.slider("Markovian History Window (L)", 3, 7, 5)
 
-# Primary fallback paths
+# Primary UI Control Sliders (Act as manual controls OR fallback if no metadata is found)
+st.sidebar.subheader("🎵 Wave Mechanics Modifiers")
+manual_growth_velocity = st.sidebar.slider("Growth Velocity Multiplier", 0.5, 3.0, 1.2, step=0.1)
+ambient_temp = st.sidebar.slider("Storage Ambient Temp (°C)", 10, 40, 22)
+manual_peak_disease_hour = st.sidebar.slider("Peak Disease Hour (Rosette Map Index)", 1, 12, 4)
+
+# Initialize absolute defaults before running ingestion routines
+growth_velocity = manual_growth_velocity
+peak_disease_hour = manual_peak_disease_hour
+
 VOYNICH_DATA_PATH = "data/zl3b_transcription/sample_zl3b.txt"
 PLANT_DATA_PATH = "data/tomato_wur_2026/sample_topology.csv"
 
@@ -74,32 +82,34 @@ if uploaded_file is not None:
     with open(temp_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     M_V = parse_voynich_text(temp_path, active_section=target_section, format_type=transcription_format)
-    st.sidebar.success(f"Successfully processed user data file!")
+    
+    # Extract metadata properties driven by folio identifier headers within custom files
+    meta = getattr(parse_voynich_text, "active_metadata", {"peak_hour": 4, "velocity_mod": 1.0, "detected_folio": "None"})
+    if meta["detected_folio"] != "None":
+        st.sidebar.success(f"📟 Folio Core Tracking Active: Identified Specimen [{meta['detected_folio']}]")
+        peak_disease_hour = meta["peak_hour"]
+        growth_velocity = meta["velocity_mod"]
 else:
     if os.path.exists(VOYNICH_DATA_PATH):
         M_V = parse_voynich_text(VOYNICH_DATA_PATH, active_section=target_section, format_type=transcription_format)
-        st.sidebar.success(f"Loaded local {transcription_format.upper()} data [{target_section.upper()}].")
+        
+        # Extract metadata properties driven by folio identifier headers within local files
+        meta = getattr(parse_voynich_text, "active_metadata", {"peak_hour": 4, "velocity_mod": 1.0, "detected_folio": "None"})
+        if meta["detected_folio"] != "None":
+            st.sidebar.success(f"📟 Folio Core Tracking Active: Identified Specimen [{meta['detected_folio']}]")
+            peak_disease_hour = meta["peak_hour"]
+            growth_velocity = meta["velocity_mod"]
     else:
         if target_section == "botanical":
-            if transcription_format == "currier":
-                M_V = np.array([[0.62, 0.26, 0.07, 0.05], [0.09, 0.70, 0.15, 0.06], [0.03, 0.07, 0.55, 0.35], [0.40, 0.10, 0.10, 0.40]])
-            elif transcription_format == "takahashi":
-                M_V = np.array([[0.60, 0.28, 0.06, 0.06], [0.07, 0.74, 0.13, 0.06], [0.01, 0.09, 0.60, 0.30], [0.48, 0.02, 0.02, 0.48]])
-            else:
-                M_V = np.array([[0.65, 0.25, 0.05, 0.05], [0.08, 0.72, 0.14, 0.06], [0.02, 0.08, 0.58, 0.32], [0.45, 0.05, 0.05, 0.45]])
+            M_V = np.array([[0.65, 0.25, 0.05, 0.05], [0.08, 0.72, 0.14, 0.06], [0.02, 0.08, 0.58, 0.32], [0.45, 0.05, 0.05, 0.45]])
         else:
             M_V = np.array([[0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25]])
 
 if os.path.exists(PLANT_DATA_PATH):
     M_P = parse_organ_lifecycle_topology(PLANT_DATA_PATH)
 else:
-    M_P = np.array([
-        [0.60, 0.30, 0.10, 0.00],
-        [0.05, 0.75, 0.15, 0.05],
-        [0.00, 0.10, 0.60, 0.30],
-        [0.50, 0.00, 0.00, 0.50]
-    ])
-
+    M_P = np.array([[0.60, 0.30, 0.10, 0.00], [0.05, 0.75, 0.15, 0.05], [0.00, 0.10, 0.60, 0.30], [0.50, 0.00, 0.00, 
+                                                                                             
 # -----------------------------------------------------------------------------
 # 5. JENSEN-SHANNON DISTANCE ENGINE
 # -----------------------------------------------------------------------------
@@ -158,62 +168,60 @@ with col2:
 
 st.divider()
 
+# Core Structural Metrics Panel
 stat_col1, stat_col2, stat_col3 = st.columns(3)
 stat_col1.metric("Observed System Distance ($D_{JS}$)", f"{observed_djs:.5f}")
 stat_col2.metric("Null Model Mean Baseline", f"{np.mean(null_distances):.5f}")
 stat_col3.metric("Empirical P-Value ($H_0$ Bound)", f"{pseudo_p_value:.4f}")
 
-if pseudo_p_value < 0.01:
-    st.success("🎉 **Isomorphism Verified:** The text transitions reflect non-random biological growth-state architecture.")
-else:
-    st.warning("⚠️ **Hypothesis Maintained:** Divergence falls within statistical margins of chance baseline fluctuations.")
+# -----------------------------------------------------------------------------
+# 7. ADVANCED WAVE MECHANICS ANALYSIS PANEL
+# -----------------------------------------------------------------------------
+st.header("🔬 Bio-Harmonic Layer Integration")
+wave_col1, wave_col2, wave_col3 = st.columns(3)
+
+# Layer 1 Metrics: Base Frequency mapped from the spiral geometry scale factor
+trajectory_data = generate_trajectory(M_V, steps=400, window_len=window_len)
+coordinates, r_squared = project_to_spiral_space(trajectory_data)
+mean_radius = np.mean(np.sqrt(coordinates[:, 0]**2 + coordinates[:, 1]**2)) if len(coordinates) > 0 else 1.0
+
+base_frequency = growth_velocity * mean_radius
+wave_col1.metric("Base Vector Frequency ($\mathcal{f}$)", f"{base_frequency:.3f} Hz")
+
+# Layer 2 Metrics: Acoustic Velocity profile mapped to vessel retention bounds
+bulk_modulus = 2.15e9  # Standard fluid pressure scale constant
+density_profile = 1000 - (ambient_temp - 4) ** 2 * 0.008  # Temperature dependent fluid density expansion
+retention_velocity = np.sqrt(bulk_modulus / density_profile)
+wave_col2.metric("Vessel Retentive Velocity ($c$)", f"{retention_velocity:.2f} m/s")
+
+# Layer 3 Metrics: Phase Cancellation Counter-Hour Calculations
+counter_hour = (peak_disease_hour + 6) % 12
+if counter_hour == 0: counter_hour = 12
+wave_col3.metric("Counter-Phase Administration Target", f"Hour {counter_hour}:00", delta="180° Interference Shift")
+
+st.divider()
 
 # -----------------------------------------------------------------------------
-# NEW: 7. ADVANCED DISTRIBUTED MODEL ANALYSIS (HISTOGRAM)
+# 8. MONTE CARLO VARIANCE DISTRIBUTION (HISTOGRAM)
 # -----------------------------------------------------------------------------
 st.subheader("📊 Monte Carlo Variance Distribution ($H_0$ vs. Empirical Position)")
-
 fig_dist, ax_dist = plt.subplots(figsize=(8, 3.5), facecolor='#1e1e24')
 ax_dist.set_facecolor('#2d2d38')
-
-# Draw Permutation Histogram
-counts, bins, patches = ax_dist.hist(
-    null_distances, bins=35, color="#8884d8", alpha=0.4, 
-    edgecolor="#1e1e24", label="Permuted Null States ($H_0$)"
-)
-
-# Overlay an explicit vertical boundary line marking the true observed evaluation point
-ax_dist.axvline(
-    observed_djs, color="#e28743", linestyle="-", linewidth=2.5,
-    label=f"Observed Metric ({observed_djs:.5f})"
-)
-
-# Annotate Significance Zones
-if observed_djs < np.min(null_distances):
-    ax_dist.text(
-        observed_djs * 1.02, max(counts) * 0.7, "Significant Real Outlier", 
-        color="#e28743", fontsize=10, weight="bold"
-    )
-
+counts, bins, patches = ax_dist.hist(null_distances, bins=35, color="#8884d8", alpha=0.4, edgecolor="#1e1e24", label="Permuted Null States ($H_0$)")
+ax_dist.axvline(observed_djs, color="#e28743", linestyle="-", linewidth=2.5, label=f"Observed Metric ({observed_djs:.5f})")
 ax_dist.set_xlabel("Jensen-Shannon Divergence Score ($D_{JS}$)", color="#f4f4f9")
 ax_dist.set_ylabel("Permutation Frequency Count", color="#f4f4f9")
 ax_dist.tick_params(colors="#f4f4f9")
 ax_dist.grid(True, linestyle=":", alpha=0.2)
 ax_dist.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9')
-
 st.pyplot(fig_dist)
 
 # -----------------------------------------------------------------------------
-# 8. TRAJECTORY GENERATION AND SPIRAL PROJECTION
+# 9. TRAJECTORY GENERATION AND SPIRAL PROJECTION
 # -----------------------------------------------------------------------------
 st.subheader("📉 Reduced State Space Trajectory Geometry: Logarithmic Path Mapping ($r(\\theta)$)")
-
-trajectory_data = generate_trajectory(M_V, steps=400, window_len=window_len)
-coordinates, r_squared = project_to_spiral_space(trajectory_data)
-
 fig, ax = plt.subplots(figsize=(8, 4.5), facecolor='#1e1e24')
 ax.set_facecolor('#2d2d38')
-
 z1, z2 = coordinates[:, 0], coordinates[:, 1]
 ax.plot(z1, z2, color="#82ca9d", alpha=0.8, linewidth=2, label=f"Observed Path ($R^2={r_squared:.4f}$)")
 ax.scatter(z1[::50], z2[::50], color="#8884d8", edgecolor="#f4f4f9", s=40, zorder=5, label="Organ Transition Nodes")
@@ -222,11 +230,6 @@ if len(z1) > 10 and target_section == "botanical":
     theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
     r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
     z1_ideal = r_ideal * np.cos(theta_ideal)
-
-    theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
-    r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
-    z1_ideal = r_ideal * np.cos(theta_ideal)
-    # Complete mathematical projection onto the Cartesian plane
     z2_ideal = r_ideal * np.sin(theta_ideal)
     ax.plot(z1_ideal, z2_ideal, color="#e28743", linestyle="--", alpha=0.6, label="Idealized Harvest Spiral Log-Fit")
 
@@ -235,6 +238,4 @@ ax.set_ylabel("State Vector Projection Area ($Z_2$)", color="#f4f4f9")
 ax.tick_params(colors="#f4f4f9")
 ax.grid(True, linestyle=":", alpha=0.3)
 ax.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9')
-
 st.pyplot(fig)
-
