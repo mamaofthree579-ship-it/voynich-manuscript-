@@ -3,14 +3,13 @@ import numpy as np
 import pandas as pd
 import re
 
-def parse_voynich_text(file_path, active_section="botanical", format_type="zandbergen_landini"):
+def parse_voynich_text(file_path, active_section="botanical", format_type="zandbergen_landini", growth_phase="Peak Flowering"):
     """
-    Ingests alternative transcription text models and scans for specific 
-    botanical folio markers to extract automated 180-degree phase signatures.
+    Ingests alternative transcription text models and uses folio metadata markers 
+    to filter transitions, integrating an interactive 3-Phase Maturity Index.
     """
     matrix = np.zeros((4, 4), dtype=np.float64)
     
-    # Pre-calculated folio biophysics lookup tables
     FOLIO_BIOPHYSICS = {
         "f2r":  {"peak_hour": 4,  "velocity_mod": 1.2},
         "f9v":  {"peak_hour": 1,  "velocity_mod": 0.8},
@@ -19,7 +18,6 @@ def parse_voynich_text(file_path, active_section="botanical", format_type="zandb
         "f55r": {"peak_hour": 10, "velocity_mod": 1.4}
     }
     
-    # Store globally accessible state metadata dictionary inside the engine
     parse_voynich_text.active_metadata = {"peak_hour": 4, "velocity_mod": 1.0, "detected_folio": "None"}
 
     try:
@@ -36,7 +34,6 @@ def parse_voynich_text(file_path, active_section="botanical", format_type="zandb
         if not line:
             continue
             
-        # Parse folio metadata tags (e.g., # FOLIO: f25r)
         if line.startswith('#'):
             if "FOLIO" in line.upper():
                 for folio_id, traits in FOLIO_BIOPHYSICS.items():
@@ -66,44 +63,36 @@ def parse_voynich_text(file_path, active_section="botanical", format_type="zandb
     if not tokens:
         return np.eye(4)
 
-    # Determine state operator array sequences
+    # 🧪 NEW: 3-Phase Maturity Index weighting rules
+    # Alters state assignment sensitivities based on the specimen's lifecycle stage
     operators = []
     for i in range(len(tokens) - 1):
         curr_token = tokens[i]
         next_token = tokens[i+1]
         
         if curr_token == "LINE_BREAK":
-            operators.append(2)
+            operators.append(2) # ROOT_ZONE
             continue
         if next_token == "LINE_BREAK":
-            operators.append(3)
+            operators.append(3) # HARVEST_LIMIT
             continue
             
-        if format_type == "takahashi":
-            if curr_token.endswith('edy') and next_token.startswith('qo'):
-                operators.append(2)
-            elif curr_token.endswith('ey') and next_token.startswith('qo'):
-                operators.append(2)
-            elif curr_token.endswith(('d', 'l', 'r', 's', 'n', 't')):
-                operators.append(1)
-            else:
-                operators.append(0)
-        elif format_type == "currier":
-            if curr_token.endswith(('dy', 'ey')) and next_token.startswith(('qo', 'ch')):
-                operators.append(2)
-            elif curr_token.endswith(('d', 'l', 'r', 's', 'n')):
-                operators.append(1)
-            else:
-                operators.append(0)
-        else:
-            if curr_token.endswith('dy') and next_token.startswith('qo'):
-                operators.append(2)
-            elif curr_token.endswith('ey') and next_token.startswith('qo'):
-                operators.append(2)
-            elif curr_token.endswith(('d', 'l', 'r', 's', 'n')):
-                operators.append(1)
-            else:
-                operators.append(0)
+        # Context-dependent morphological hand-offs
+        is_branch = curr_token.endswith(('dy', 'ey')) and next_token.startswith('qo')
+        is_vascular = curr_token.endswith(('d', 'l', 'r', 's', 'n'))
+        
+        if growth_phase == "Young Vegetative":
+            # Young plants emphasize root stabilization and stalk elongation patterns
+            if is_vascular: operators.append(1) # STEM_CONTINUANCE
+            else: operators.append(0)           # ROOT_ZONE bias
+        elif growth_phase == "Dried Prep/Storage":
+            # Post-harvest instructions bypass elongation to loop heavily on harvest boundaries
+            if is_branch: operators.append(3)   # HARVEST_LIMIT bias
+            else: operators.append(1)           # STEM_CONTINUANCE
+        else: # Default: Peak Flowering (Standard structural matrix balances)
+            if is_branch: operators.append(2)
+            elif is_vascular: operators.append(1)
+            else: operators.append(0)
 
     for idx in range(len(operators) - 1):
         matrix[operators[idx], operators[idx+1]] += 1
