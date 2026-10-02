@@ -1,4 +1,4 @@
-# Save this as your root app.py file
+# Save as your root app.py file
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -31,7 +31,6 @@ LIFECYCLE_STATES = ["ROOT_ZONE", "STEM_CONTINUANCE", "GENERATIVE_FLOWER", "HARVE
 # -----------------------------------------------------------------------------
 st.sidebar.header("🔬 Agricultural Controls")
 
-# NEW: Section Selector to isolate localized textual dialects
 target_section = st.sidebar.selectbox(
     "Target Manuscript Section", 
     ["botanical", "astrological"],
@@ -48,11 +47,9 @@ PLANT_DATA_PATH = "data/tomato_wur_2026/sample_topology.csv"
 # 4. DATA PROCESSING PIPELINE
 # -----------------------------------------------------------------------------
 if os.path.exists(VOYNICH_DATA_PATH):
-    # Dynamically inject the active text section parameter to filter out un-related sequences
     M_V = parse_voynich_text(VOYNICH_DATA_PATH, active_section=target_section)
     st.sidebar.success(f"Loaded local Voynich dataset [{target_section.upper()}].")
 else:
-    # Default reference matrices to preserve dashboard display when data isn't mounted
     if target_section == "botanical":
         M_V = np.array([
             [0.65, 0.25, 0.05, 0.05],
@@ -60,7 +57,7 @@ else:
             [0.02, 0.08, 0.58, 0.32],
             [0.45, 0.05, 0.05, 0.45]
         ])
-    else: # Astrological flat/random noise profile (No architectural cultivation logic)
+    else:
         M_V = np.array([
             [0.25, 0.25, 0.25, 0.25],
             [0.25, 0.25, 0.25, 0.25],
@@ -115,11 +112,26 @@ with col1:
     st.subheader("🌱 Plant Organ Lifecycle Matrix ($M_P$)")
     df_p = pd.DataFrame(M_P, index=LIFECYCLE_STATES, columns=LIFECYCLE_STATES)
     st.dataframe(df_p.style.background_gradient(cmap="Greens", axis=None), use_container_width=True)
+    
+    # NEW: Data CSV Exporters
+    st.download_button(
+        label="📥 Export Plant Matrix (CSV)",
+        data=df_p.to_csv().encode('utf-8'),
+        file_name="plant_lifecycle_matrix.csv",
+        mime="text/csv"
+    )
 
 with col2:
     st.subheader(f"📜 Textual Matrix: [{target_section.upper()}] ($M_V$)")
     df_v = pd.DataFrame(M_V, index=LIFECYCLE_STATES, columns=LIFECYCLE_STATES)
     st.dataframe(df_v.style.background_gradient(cmap="Purples", axis=None), use_container_width=True)
+    
+    st.download_button(
+        label="📥 Export Text Matrix (CSV)",
+        data=df_v.to_csv().encode('utf-8'),
+        file_name=f"voynich_{target_section}_matrix.csv",
+        mime="text/csv"
+    )
 
 st.divider()
 
@@ -148,7 +160,6 @@ z1, z2 = coordinates[:, 0], coordinates[:, 1]
 ax.plot(z1, z2, color="#82ca9d", alpha=0.8, linewidth=2, label=f"Observed Path ($R^2={r_squared:.4f}$)")
 ax.scatter(z1[::50], z2[::50], color="#8884d8", edgecolor="#f4f4f9", s=40, zorder=5, label="Organ Transition Nodes")
 
-# NEW: Plot Ideal Logarithmic Theoretical Curve Overlay if fit criteria is valid
 if len(z1) > 10 and target_section == "botanical":
     theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
     r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
