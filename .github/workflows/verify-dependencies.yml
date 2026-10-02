@@ -1,4 +1,4 @@
-name: 🧪 Dependency Verification & App Integration Check
+name: 🧪 Comprehensive CI Validation Runner
 
 on:
   push:
@@ -7,46 +7,33 @@ on:
     branches: [ main, master ]
 
 jobs:
-  verify-environment:
+  verify-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Clone the project files from your repository into the container
     - name: 📁 Checkout Repository Source
       uses: actions/checkout@v4
 
-    # Step 2: Provision an isolated, safe Python 3.11 environment
     - name: 🐍 Initialize Python Environment (3.11)
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: 'pip' # Automated caching drastically speeds up subsequent run execution times
+        cache: 'pip'
 
-    # Step 3: Upgrade pip and install the structural project requirements
     - name: 📦 Install Pinned System Dependencies
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    # Step 4: Run an integration verification run to guarantee the app boots cleanly
-    - name: 🚀 Verify Core App Ingestion & Initialization Loop
+    - name: 🚀 Syntax Audit App Main Entry Point
       run: |
-        python -c "
-        import numpy as np
-        import pandas as pd
-        import scipy
-        import sklearn
-        import matplotlib
-        print('✅ All foundational mathematical sub-packages resolved successfully.')
-        "
-
-    # Step 5: Headless check verifying that streamlit can parse app.py without syntax crashes
-    - name: 👁️ Syntax Audit App Main Entry Point
-      run: |
-        python -m py_compile app.py
-        print('✅ app.py syntax verification complete. Safe for cloud runtime hosting.')
+        python -m py_compile plant-topology-app.py
+        print('✅ plant-topology-app.py syntax verification complete.')
 
     - name: 🔬 Execute Data Schema Validation Unit Test
       run: |
         python tests/validate_schema.py
-        print('✅ All data structure asset validations run complete.')
+
+    - name: ⏱️ Execute Computational Speed Benchmarks
+      run: |
+        python tests/test_benchmarks.py
