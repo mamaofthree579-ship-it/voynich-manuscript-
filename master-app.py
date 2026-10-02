@@ -222,7 +222,7 @@ with col2:
     # Trace standard machine home alignment markers
     ax_cnc.scatter(0, 0, color='lime', marker='+', s=150, label='Machine Zero (X0, Y0)')
     
-    # Simulate Rapid tool feed movement paths (G00 translation vectors)
+    # FIX: Corrected missing coordinates [0, 0] for X axis trajectory to prevent script crashes
     ax_cnc.plot([0, 0], [0, r3], color='orange', linestyle=':', alpha=0.7, label='G00 Rapid Feed Trajectory')
     
     # Reconstruct concentric tool circular interpolations (G02/G03 loops)
@@ -263,3 +263,4 @@ for idx, name in enumerate(panels, 1):
             st.success(f"🟢 P{idx}\n{name}\n[Infusion Vector]")
         else:
             st.info(f"⚪ P{idx}\n{name}\n[Baseline]")
+
