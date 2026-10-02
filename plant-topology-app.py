@@ -234,3 +234,66 @@ ax.tick_params(colors="#f4f4f9")
 ax.grid(True, linestyle=":", alpha=0.3)
 ax.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9')
 st.pyplot(fig)
+
+# Save as the updated Section 9 at the bottom of plant-topology-app.py
+# -----------------------------------------------------------------------------
+# 9. GEOMETRIC AND CHRONO-ADMINISTRATION VISUALIZATIONS
+# -----------------------------------------------------------------------------
+st.subheader("📉 System Trajectory Space & Counter-Phase Delivery Geometry")
+
+vis_col1, vis_col2 = st.columns(2)
+
+with vis_col1:
+    # Sub-Panel A: The Low-Dimensional State Space Spiral Projection
+    fig_spiral, ax_spiral = plt.subplots(figsize=(6, 4.5), facecolor='#1e1e24')
+    ax_spiral.set_facecolor('#2d2d38')
+    
+    z1, z2 = coordinates[:, 0], coordinates[:, 1]
+    ax_spiral.plot(z1, z2, color="#82ca9d", alpha=0.8, linewidth=2, label=f"Observed Path ($R^2={r_squared:.4f}$)")
+    ax_spiral.scatter(z1[::50], z2[::50], color="#8884d8", edgecolor="#f4f4f9", s=40, zorder=5, label="Organ Nodes")
+
+    if len(z1) > 10 and target_section == "botanical":
+        theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
+        r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
+        z1_ideal = r_ideal * np.cos(theta_ideal)
+        z2_ideal = r_ideal * np.sin(theta_ideal)
+        ax_spiral.plot(z1_ideal, z2_ideal, color="#e28743", linestyle="--", alpha=0.6, label="Idealized Log-Spiral")
+
+    ax_spiral.set_xlabel("State Vector Projection Area ($Z_1$)", color="#f4f4f9")
+    ax_spiral.set_ylabel("State Vector Projection Area ($Z_2$)", color="#f4f4f9")
+    ax_spiral.tick_params(colors="#f4f4f9")
+    ax_spiral.grid(True, linestyle=":", alpha=0.3)
+    ax_spiral.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9', loc="upper left")
+    st.pyplot(fig_spiral)
+
+with vis_col2:
+    # Sub-Panel B: NEW Polar Clock face mapping the 180-degree Destructive Interference Window
+    fig_clock, ax_clock = plt.subplots(figsize=(6, 4.5), subplot_kw={'projection': 'polar'}, facecolor='#1e1e24')
+    ax_clock.set_facecolor('#2d2d38')
+    
+    # Convert standard 12-hour clock indices directly into circular radian angles
+    # Note: 12:00 sits at the top vertical axis position (pi/2)
+    angles = np.linspace(0, 2*np.pi, 12, endpoint=False)
+    
+    disease_angle = (3 - peak_disease_hour) * (2*np.pi / 12)
+    admin_angle = (3 - counter_hour) * (2*np.pi / 12)
+    
+    # Plotting Directional Administration Vector Channels
+    ax_clock.annotate("", xy=(disease_angle, 1.0), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#ef5350", linewidth=3, label="Peak Disease Intensity"))
+    ax_clock.annotate("", xy=(admin_angle, 1.0), xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="#66bb6a", linewidth=3, label="Counter-Phase Delivery Window"))
+    
+    # Clean up the polar dial layout to mimic a standard circular clock face
+    ax_clock.set_theta_zero_location("N")
+    ax_clock.set_theta_direction(-1)
+    ax_clock.set_xticks(np.linspace(0, 2*np.pi, 12, endpoint=False))
+    ax_clock.set_xticklabels([str(i if i != 0 else 12) for i in range(12)], color="#f4f4f9")
+    ax_clock.set_yticklabels([])
+    ax_clock.grid(True, color="#f4f4f9", alpha=0.1)
+    
+    # Custom Legend handling to protect polar axis bounding boxes
+    ax_clock.plot([], [], color="#ef5350", label="Peak Pathology Intensity Hour")
+    ax_clock.plot([], [], color="#66bb6a", label="180° Balanced Administration Hour")
+    ax_clock.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9', loc="lower center", bbox_to_anchor=(0.5, -0.2))
+    
+    st.pyplot(fig_clock)
+
