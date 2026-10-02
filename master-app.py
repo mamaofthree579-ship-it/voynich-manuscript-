@@ -4,18 +4,17 @@ import matplotlib.pyplot as plt
 import math
 import sqlite3
 import os
+import pandas as pd
 
 # =====================================================================
 # 🛠️ 1. SAFE MULTI-THREADED DATABASE INITIALIZATION MATRIX
 # =====================================================================
-# Force path generation to guarantee Streamlit Cloud write permissions
 os.makedirs("temp", exist_ok=True)
 
-# Function to run initialization exactly ONCE to prevent locked errors
 @st.cache_resource
 def initialize_database_safely():
     conn = sqlite3.connect("temp/voynich_database.db", check_same_thread=False)
-    with conn: # Using a context manager automatically releases database file locks
+    with conn:
         cursor = conn.cursor()
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS profiles (
@@ -32,7 +31,6 @@ def initialize_database_safely():
         )
         """)
         
-        # Populating the Master Historical Archetypes safely
         default_presets = [
             ("Folio 2v: Neurological Overdrive", "Organ-Tissue Pathology", "Neurological Overdrive (CNS Burnout)", 0.22, 0.00, "Water-Based Infusion", "Sun (3:2 Ratio)", "Thick Monastic Clay", "Cylindrical Restricted"),
             ("Folio 78r: Lymphatic Circuit", "Balneological Fluid Circuits", "Clover Resonator (Folio 78r Preset)", 0.11, 0.05, "Wine/Alcohol Carrier", "Moon (4:3 Ratio)", "Early Venetian Glass", "Cylindrical Restricted"),
@@ -46,10 +44,9 @@ def initialize_database_safely():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, preset)
             except sqlite3.IntegrityError:
-                pass # Preset already exists inside database layer; skip safely
+                pass
     return conn
 
-# Execute connection setup completely isolated from page refresh loops
 conn = initialize_database_safely()
 cursor = conn.cursor()
 
@@ -58,22 +55,13 @@ cursor = conn.cursor()
 # =====================================================================
 st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
 st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
-st.caption("Production Build (v7.0.0) | Multi-Thread Lock Mitigation & Compliant Markdown Rendering Vectors.")
+st.caption("Production Build (v8.0.0) | Automated CSV Exporters, Zodiac Alignment Gearings, and G-Code Terminals.")
 
 # --- Database UI Profile Loader ---
 st.sidebar.header("📋 Database Profiles Ledger")
 saved_profiles = cursor.execute("SELECT name FROM profiles").fetchall()
 profile_list = [p[0] for p in saved_profiles]
 selected_profile = st.sidebar.selectbox("Load Reconstructed Archetype:", ["Manual Configuration Input"] + profile_list)
-
-# --- Database Maintenance & Purge Operations ---
-if st.sidebar.button("🚨 Reset Ledger to Factory Presets"):
-    with sqlite3.connect("temp/voynich_database.db", check_same_thread=False) as purge_conn:
-        purge_cursor = purge_conn.cursor()
-        purge_cursor.execute("DROP TABLE IF EXISTS profiles")
-        purge_conn.commit()
-    st.cache_resource.clear()
-    st.rerun()
 
 # Fallback defaults if manual configuration is chosen
 db_system_mode = "Organ-Tissue Pathology"
@@ -126,7 +114,15 @@ else:
 
 st.sidebar.header("2. Compounding & Material Variables")
 compounding_tier = st.sidebar.selectbox("Compounding Complexity", ["Single Herb Extract", "Dual-Plant Compounding", "Triple-Plant Envelope"], index=1 if db_plant_b > 0.0 else 0)
-plant_a_factor = st.sidebar.slider("Plant A Spiral Factor", 0.05, 0.50, float(db_plant_a), step=0.01)
+
+# Dynamic Automated Zodiac Spoke Modulator Adjustment
+if system_mode == "Zodiac Carrier Modulators":
+    st.sidebar.caption("🌌 **Zodiac Gearing Active:** Spiral scales modulated automatically via radial phase angle vector loops.")
+    z_multiplier = 30.0 / spoke_count
+    plant_a_factor = st.sidebar.slider("Plant A Spiral Factor (Modulated)", 0.05, 0.50, float(np.clip(db_plant_a * z_multiplier, 0.05, 0.50)), step=0.01)
+else:
+    plant_a_factor = st.sidebar.slider("Plant A Spiral Factor", 0.05, 0.50, float(db_plant_a), step=0.01)
+
 plant_b_factor = st.sidebar.slider("Plant B Spiral Factor", 0.05, 0.50, float(db_plant_b) if db_plant_b > 0.0 else 0.15, step=0.01) if compounding_tier != "Single Herb Extract" else 0.0
 plant_c_factor = st.sidebar.slider("Plant C Spiral Factor", 0.05, 0.50, 0.11, step=0.01) if compounding_tier == "Triple-Plant Envelope" else 0.0
 
@@ -221,8 +217,6 @@ with col1:
     # --- Live Multi-Plant Compounding Beat Envelope Visualizer ---
     if compounding_tier != "Single Herb Extract":
         st.write("#### 🧪 Multi-Plant Compounding Beat Envelope Analysis")
-        st.caption("Visualizing the deep rhythmic modulation pulse (envelope curve) generated via superposition.")
-        
         t_env = np.linspace(0, 0.1, 1000)
         env_wave_1 = np.sin(2 * np.pi * f1 * t_env)
         env_wave_2 = np.sin(2 * np.pi * f2 * t_env)
@@ -278,7 +272,7 @@ with col2:
     st.markdown(f'<div style="display: flex; justify-content: center;">{svg_blueprint}</div>', unsafe_allow_html=True)
 
 # =====================================================================
-# ⏳ 5. COSMOLOGICAL SCHEDULER TIMELINE VIEW
+# ⏳ 5. COSMOLOGICAL SCHEDULER TIMELINE & RAW EXPORTERS TERMINAL
 # =====================================================================
 st.markdown("---")
 st.subheader("🪐 Cosmological Chrono-Shift Core Alignment Map")
@@ -293,3 +287,46 @@ for idx, name in enumerate(panels, 1):
             st.success(f"🟢 P{idx}\n{name}\n[Infusion]")
         else:
             st.info(f"⚪ P{idx}\n{name}\n[Baseline]")
+
+# --- Finalized G-Code Output Terminal Block ---
+st.markdown("---")
+st.subheader("📟 CNC Terminal Output & Data Ledger Exporter")
+t_col1, t_col2 = st.columns(2)
+
+with t_col1:
+    st.write("#### 📝 Machine CNC Block Code (Copy-Paste Terminal)")
+    raw_gcode = f"""(VOYNICH SEALS GENERATOR AUTOMATION)
+G21 (Set Units to Metric)
+G90 (Absolute Coordinate Trajectory Axis)
+M06 T01 (Load 1.00mm Intonation Milling Bit)
+G00 X0.000 Y{r3:.3f} Z5.000 (Rapid to Outer Rim Edge)
+G01 Z-0.500 F150 (Milling Damping Line Depth)
+G02 X0.000 Y-{r3:.3f} I0.000 J-{r3:.3f} F300
+G02 X0.000 Y{r3:.3f} I0.000 J{r3:.3f}
+G00 X0.000 Y0.000 Z5.000 (Return Machine Home)
+M30 (End of Execution Loop Thread)"""
+    st.code(raw_gcode, language="gcode")
+
+with t_col2:
+    st.write("#### 💾 Database Spreadsheet Ledger Sheet")
+    st.caption("Download the compiled calculation arrays into a structured spreadsheet log for audit trails.")
+    
+    # Read the current layout profile database arrays to dataframe
+    df_profiles = pd.read_sql_query("SELECT * FROM profiles", conn)
+    st.dataframe(df_profiles, height=140)
+    
+    csv_data = df_profiles.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📥 Download Local Ledger Database as CSV",
+        data=csv_data,
+        file_name="voynich_harmonic_ledger.csv",
+        mime="text/csv"
+    )
+
+if st.sidebar.button("🚨 Reset Ledger to Factory Presets"):
+    with sqlite3.connect("temp/voynich_database.db", check_same_thread=False) as purge_conn:
+        purge_cursor = purge_conn.cursor()
+        purge_cursor.execute("DROP TABLE IF EXISTS profiles")
+        purge_conn.commit()
+    st.cache_resource.clear()
+    st.rerun()
