@@ -1,16 +1,5 @@
 # SECTION: BOTANICAL
-# Operational cultivation steps for root, stem, and flowering cycles
-chedyedy qoole.d roredy qoedy.ot.lor sady qokedy dnal sady qoedy
-dal.edy qokedy.dl dnal.edy qoedy lardy.qoedy dnal sady qoedy dnal lardy
-chedyedy qoole.d roredy qoedy.ot.lor sady qokedy dnal sady qoedy
-dal.edy qokedy.dl dnal.edy qoedy lardy.qoedy dnal sady qoedy dnal lardy
-
-# SECTION: ASTROLOGICAL
-# Planetary charts and sky alignment sequences (should be bypassed by our parser)
-xyzor.ty dnal.or pador slar.dy valtor konas.or kalar dnalor pador
-xyzor.ty dnal.or pador slar.dy valtor konas.or kalar dnalor pador
-
-# SECTION: BOTANICAL
-# Processing, harvesting limits, and herbal preparation rules
+# FOLIO: f25r
+# Ingesting Solar Spiral Specimen data vectors into active state calculation memory
 chedyedy qoole.d roredy qoedy.ot.lor sady qokedy dnal sady qoedy
 dal.edy qokedy.dl dnal.edy qoedy lardy.qoedy dnal sady qoedy dnal lardy
