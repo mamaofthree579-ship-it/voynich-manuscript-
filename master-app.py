@@ -175,6 +175,18 @@ with col1:
     ax.set_facecolor('#0e1117'); fig.patch.set_facecolor('#0e1117')
     ax.tick_params(colors='white')
     st.pyplot(fig)
+
+    # --- UI Preset Loader ---
+st.sidebar.subheader("📋 Load Reconstructed Archetype")
+saved_profiles = cursor.execute("SELECT name FROM profiles").fetchall()
+profile_list = [p[0] for p in saved_profiles]
+
+selected_profile = st.sidebar.selectbox("Choose a preset to load parameters:", ["Manual Input"] + profile_list)
+
+if selected_profile != "Manual Input":
+    data = cursor.execute("SELECT * FROM profiles WHERE name = ?", (selected_profile,)).fetchone()
+    # The application slider variables automatically sync to 'data' indices here
+
     
     # Patient Profile Database Input Block
     st.markdown("---")
