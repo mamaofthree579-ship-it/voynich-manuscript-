@@ -1,0 +1,11 @@
+# Zandbergen-Landini 3b Mock Corpus Sample
+# Structural Profile: Level 1 and 2 Transition Validation Sequences
+chedyedy qoole.d roredy qoedy.ot.lor sady qokedy dnal sady qoedy
+dal.edy qokedy.dl dnal.edy qoedy lardy.qoedy dnal sady qoedy dnal lardy
+chedyedy qoole.d roredy qoedy.ot.lor sady qokedy dnal sady qoedy
+dal.edy qokedy.dl dnal.edy qoedy lardy.qoedy dnal sady qoedy dnal lardy
+chedyedy qoole.d roredy qoedy.ot.lor sady qokedy dnal sady qoedy
+dal.edy qokedy.dl dnal.edy qoedy lardy.qoedy dnal sady qoedy dnal lardy
+# Structural boundary point sequence simulation
+chedyedy qoole.d roredy qoedy.ot.lor sady qokedy dnal sady qoedy
+dal.edy qokedy.dl dnal.edy qoedy lardy.qoedy dnal sady qoedy dnal lardy
