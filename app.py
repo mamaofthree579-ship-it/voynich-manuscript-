@@ -1,274 +1,215 @@
+# Save as plant-topology-app.py
 import streamlit as st
 import numpy as np
 import pandas as pd
-import requests
-import random
-import json
-import os
-from scipy.spatial.distance import jensenshannon
-from scipy.optimize import minimize
-from collections import defaultdict
 import matplotlib.pyplot as plt
+import os
 
-# =====================================================================
-# 1. STREAMLIT & PERSISTENT CHECKPOINT ENGINE CONFIGURATION
-# =====================================================================
-st.set_page_config(page_title="Voynich-TomatoWUR Transition Pipeline", layout="wide")
+# Import our modular backend engines
+from src.parser import parse_voynich_text
+from src.graph_engine import parse_organ_lifecycle_topology
+from src.geometry import generate_trajectory, project_to_spiral_space
 
-CHECKPOINT_FILE = "calibrated_weights_checkpoint.json"
-
-def save_system_checkpoint(weights, log_history):
-    checkpoint_data = {
-        "cumulative_weights": weights,
-        "experience_log": log_history
-    }
-    with open(CHECKPOINT_FILE, "w") as f:
-        json.dump(checkpoint_data, f, indent=4)
-
-def load_system_checkpoint():
-    if os.path.exists(CHECKPOINT_FILE):
-        try:
-            with open(CHECKPOINT_FILE, "r") as f:
-                data = json.load(f)
-                return data.get("cumulative_weights"), data.get("experience_log", [])
-        except Exception:
-            pass
-    return None, []
-
-saved_weights, saved_log = load_system_checkpoint()
-
-if "experience_log" not in st.session_state:
-    st.session_state.experience_log = saved_log
-if "cumulative_weights" not in st.session_state:
-    st.session_state.cumulative_weights = saved_weights if saved_weights else {"CONTINUATION": 1.0, "BRANCHING": 1.0, "TERMINATION": 1.0}
-
-st.title("🎛️ Hierarchical Transition & Structural Learning Pipeline")
-st.markdown("""
-This application aligns **Voynich Manuscript syntax transitions (ZL3b)** with **TomatoWUR 3D growth topologies**.
-It implements continuous state-space calculations using custom context-preserving Multi-Order Markov Null Controls.
-""")
-
-# =====================================================================
-# 2. DATA INGESTION & PARSING ENGINE
-# =====================================================================
-class OnlineDataIngestionEngine:
-    @staticmethod
-    @st.cache_data(ttl=3600)
-    def fetch_voynich_tokens():
-        url = "https://voynich.nu"
-        try:
-            response = requests.get(url, timeout=5)
-            if response.status_code == 200:
-                lines = response.text.split("\n")
-                tokens = []
-                for line in lines:
-                    if line.startswith("#") or not line.strip():
-                        continue
-                    words = [w.split(".")[-1].strip("-,;") for w in line.split() if "." in w]
-                    tokens.extend([w for w in words if w.isalpha()])
-                if len(tokens) > 500:
-                    return tokens
-        except Exception:
-            pass
-        
-        # Robust morphological fallback simulating the Zandbergen-Landini corpus syntax distribution
-        pool = ['choledy', 'oledy', 'cthey', 'reydy', 'tady', 'qokor', 'shey', 'otol', 'edy', 'dy', 'ey']
-        return [random.choice(pool) for _ in range(5000)]
-
-    @staticmethod
-    @st.cache_data(ttl=3600)
-    def fetch_tomato_graph():
-        edge_types_pool = ['<', '<', '+', '<', 'a', 't']
-        return [random.choice(edge_types_pool) for _ in range(3000)]
-
-# =====================================================================
-# 3. MATHEMATICAL LOGIC & PIPELINE PROCESSORS
-# =====================================================================
-class TransitionPipeline:
-    def __init__(self):
-        self.states_order = ['CONTINUATION', 'BRANCHING', 'TERMINATION']
-
-    def map_voynich_state(self, token):
-        if not isinstance(token, str): return 'CONTINUATION'
-        if token.endswith('edy') or token.endswith('s') or token.endswith('n'):
-            return 'TERMINATION'
-        if token.endswith('dy') or token.endswith('d'):
-            return 'BRANCHING'
-        return 'CONTINUATION'
-
-    def map_tomato_state(self, edge_type):
-        mapping = {'<': 'CONTINUATION', 'a': 'CONTINUATION', '+': 'BRANCHING', 't': 'TERMINATION'}
-        return mapping.get(edge_type, 'TERMINATION')
-
-    def compute_markov_matrix(self, sequence):
-        state_idx = {state: i for i, state in enumerate(self.states_order)}
-        k = len(self.states_order)
-        counts = np.zeros((k, k))
-        
-        for i in range(len(sequence) - 1):
-            s_curr, s_next = sequence[i], sequence[i+1]
-            if s_curr in state_idx and s_next in state_idx:
-                counts[state_idx[s_curr], state_idx[s_next]] += 1
-                
-        row_sums = counts.sum(axis=1, keepdims=True)
-        return np.where(row_sums > 0, counts / row_sums, np.ones((k, k)) / k)
-
-class AdvancedNullGenerator:
-    def __init__(self, tokens):
-        self.tokens = tokens
-        self.order_1_map = defaultdict(list)
-        self.order_2_map = defaultdict(list)
-        self._build_maps()
-
-    def _build_maps(self):
-        for i in range(len(self.tokens) - 1):
-            self.order_1_map[self.tokens[i]].append(self.tokens[i+1])
-        for i in range(len(self.tokens) - 2):
-            self.order_2_map[(self.tokens[i], self.tokens[i+1])].append(self.tokens[i+2])
-
-    def generate_second_order_null(self):
-        if len(self.tokens) < 3: 
-            return list(self.tokens)
-        
-        null_seq = [self.tokens, self.tokens]
-        for _ in range(2, len(self.tokens)):
-            context = (null_seq[-2], null_seq[-1])
-            if context in self.order_2_map and random.random() > 0.10:
-                next_word = random.choice(self.order_2_map[context])
-            elif null_seq[-1] in self.order_1_map:
-                next_word = random.choice(self.order_1_map[null_seq[-1]])
-            else:
-                next_word = random.choice(self.tokens)
-            null_seq.append(next_word)
-        return null_seq
-
-def fit_spiral_geometry(matrix):
-    vals, vecs = np.linalg.eigh(matrix + matrix.T)
-    x = vecs[:, -1]
-    y = vecs[:, -2]
-    r_obs = np.sqrt(x**2 + y**2)
-    t = np.arange(len(r_obs))
-    
-    def loss(p):
-        a, b, omega = p
-        r_pred = a * (np.abs(omega * t) ** b)
-        return np.sum((r_obs - r_pred) ** 2)
-        
-    res = minimize(loss, [0.5, 1.0, 0.1], method='Nelder-Mead')
-    return res.x, res.fun
-
-def run_single_simulation(args):
-    seed, tokens, states_order, M_P = args
-    random.seed(seed)
-    np.random.seed(seed)
-    pipeline = TransitionPipeline()
-    null_gen = AdvancedNullGenerator(tokens)
-    shuffled = null_gen.generate_second_order_null()
-    v_seq = [pipeline.map_voynich_state(t) for t in shuffled]
-    M_V_null = pipeline.compute_markov_matrix(v_seq)
-    row_js = [jensenshannon(M_V_null[i], M_P[i]) for i in range(len(states_order))]
-    return np.mean(row_js)
-
-# =====================================================================
-# 4. SIDEBAR CONTROLS & DYNAMIC DATA REFLECTION ACTIONS
-# =====================================================================
-st.sidebar.header("🛠️ Experimental Parameters")
-iterations = st.sidebar.slider("Monte Carlo Iterations", min_value=100, max_value=2000, value=500, step=100)
-base_learning_rate = st.sidebar.slider("Initial Learning Rate (α₀)", min_value=0.01, max_value=0.50, value=0.10, step=0.01)
-
-st.sidebar.markdown("---")
-st.sidebar.header("📂 Manuscript Taxonomy Filter")
-section_filter = st.sidebar.selectbox(
-    "Target Folio Section Pool",
-    ["Full Corpus (Global Profile)", "Herbal Section (Leaves Focus)", "Biological Section (Fluid Pipes)", "Pharmaceutical Section (Root Jars)"]
+# -----------------------------------------------------------------------------
+# 1. PAGE CONFIGURATION & THEME
+# -----------------------------------------------------------------------------
+st.set_page_config(page_title="Voynich Agricultural Engine", layout="wide")
+st.title("🌿 Voynich Operational Herbal: Lifecycle Transition Engine")
+st.write(
+    "Testing the manuscript as an active **multi-metric agricultural manual**. "
+    "This pipeline maps positional word transitions against both physical growth phases "
+    "and bio-harmonic wave mechanics."
 )
 
-if st.sidebar.button("🔄 Trigger Online Pipeline Execution Run", key="execute_pipeline_run_btn"):
-    with st.spinner("Streaming repositories and slicing unique dataset frames..."):
-        all_tokens = OnlineDataIngestionEngine.fetch_voynich_tokens()
-        all_edges = OnlineDataIngestionEngine.fetch_tomato_graph()
-        
-        # Slicing simulation profiles to match the user's focus
-        voynich_window_size = min(len(all_tokens), 1500)
-        tomato_window_size = min(len(all_edges), 1000)
-        
-        # Enforce distinct seed window anchors depending on the target folder
-        section_offsets = {
-            "Full Corpus (Global Profile)": 0, 
-            "Herbal Section (Leaves Focus)": 1000, 
-            "Biological Section (Fluid Pipes)": 2000, 
-            "Pharmaceutical Section (Root Jars)": 3000
-        }
-        base_offset = section_offsets.get(section_filter, 0)
-        
-        v_start = (base_offset + random.randint(0, 500)) % (len(all_tokens) - voynich_window_size)
-        t_start = (base_offset + random.randint(0, 500)) % (len(all_edges) - tomato_window_size)
-        
-        tokens = all_tokens[v_start : v_start + voynich_window_size]
-        edges = all_edges[t_start : t_start + tomato_window_size]
-        
-        pipeline = TransitionPipeline()
-        voynich_states = [pipeline.map_voynich_state(t) for t in tokens]
-        tomato_states = [pipeline.map_tomato_state(e) for e in edges]
-        
-        M_V = pipeline.compute_markov_matrix(voynich_states)
-        M_P = pipeline.compute_markov_matrix(tomato_states)
-        
-        row_js = [jensenshannon(M_V[i], M_P[i]) for i in range(3)]
-        observed_djs = np.mean(row_js)
-        
-        null_dist_list = []
-        progress_placeholder = st.sidebar.empty()
-        
-        for i in range(iterations):
-            sim_arg = (i, tokens, pipeline.states_order, M_P)
-            trial_result = run_single_simulation(sim_arg)
-            null_dist_list.append(trial_result)
-            
-            if (i + 1) % max(1, iterations // 10) == 0:
-                progress_placeholder.text(f"Running MC Trial: {i+1}/{iterations}")
-                
-        progress_placeholder.empty()
-        null_dist = np.array(null_dist_list)
-        
-        p_value = np.mean(null_dist <= observed_djs)
-        spiral_params, residual = fit_spiral_geometry(M_V)
-        
-        # ─── ADAPTIVE LEARNING DECAY OPERATOR ────────────────────────────────
-        # ─── ADAPTIVE LEARNING DECAY OPERATOR ────────────────────────────────
-        current_epoch = len(st.session_state.experience_log) + 1
-        decayed_learning_rate = base_learning_rate / (1.0 + 0.05 * current_epoch)
-        
-        for idx, state in enumerate(pipeline.states_order):
-            error_gradient = np.abs(M_V[idx].mean() - M_P[idx].mean())
-            st.session_state.cumulative_weights[state] -= (
-                decayed_learning_rate * error_gradient
-            )
-            
-        # ─── LOG METRIC EVALUATIONS TO APP STATE ─────────────────────────────
-        st.session_state.experience_log.append({
-            "Run": current_epoch,
-            "Section": section_filter,
-            "D_JS": float(observed_djs),
-            "p-value": float(p_value),
-            "Fit Loss": float(residual),
-            "Alpha Used": float(decayed_learning_rate)
-        })
-        
-        st.session_state.latest_null_dist = null_dist.tolist()
-        st.session_state.latest_spiral_params = spiral_params.tolist()
-        
-        # ─── COMMIT STATE ENGINES TO FILE DISK ───────────────────────────────
-        save_system_checkpoint(
-            st.session_state.cumulative_weights, 
-            st.session_state.experience_log
-        )
-        
-        st.success(
-            f"Analysis cycle completed! Calibrated with decayed α = {decayed_learning_rate:.4f}."
-        )
+# -----------------------------------------------------------------------------
+# 2. LIFECYCLE STATE VECTOR DEFINITIONS
+# -----------------------------------------------------------------------------
+LIFECYCLE_STATES = ["ROOT_ZONE", "STEM_CONTINUANCE", "GENERATIVE_FLOWER", "HARVEST_LIMIT"]
 
+# -----------------------------------------------------------------------------
+# 3. INTERACTIVE SIDEBAR & CUSTOM FILE UPLOADER
+# -----------------------------------------------------------------------------
+st.sidebar.header("📂 Data Ingestion Hub")
 
-# =====================================================================
-# 5. IN-MEMORY PORTFOLIO SANDBOX ADJUSTMENTS
-# =====================================================================
+uploaded_file = st.sidebar.file_uploader(
+    "Upload Custom Voynich Transcription Log", 
+    type=["txt", "csv", "json"],
+    help="Drop a plaintext transcription file here to instantly parse custom linguistic models."
+)
+
+target_section = st.sidebar.selectbox(
+    "Target Manuscript Section", 
+    ["botanical", "astrological"],
+    help="Isolate textual matrices to measure agricultural trajectory invariance."
+)
+
+transcription_format = st.sidebar.selectbox(
+    "Transcription Standard",
+    ["zandbergen_landini", "takahashi", "currier"],
+    help="Select the morphological alphabet system to match your ingested text file rules."
+)
+
+st.sidebar.divider()
+st.sidebar.header("⚙️ Biophysics & Simulation Settings")
+num_sim_perms = st.sidebar.slider("Monte Carlo Shuffling Runs", 500, 5000, 1500, step=500)
+window_len = st.sidebar.slider("Markovian History Window (L)", 3, 7, 5)
+
+# NEW: Bio-Harmonic Parameter Adjustments
+st.sidebar.subheader("🎵 Wave Mechanics Modifiers")
+growth_velocity = st.sidebar.slider("Growth Velocity Multiplier", 0.5, 3.0, 1.2, step=0.1)
+ambient_temp = st.sidebar.slider("Storage Ambient Temp (°C)", 10, 40, 22)
+peak_disease_hour = st.sidebar.slider("Peak Disease Hour (Rosette Map Index)", 1, 12, 4)
+
+VOYNICH_DATA_PATH = "data/zl3b_transcription/sample_zl3b.txt"
+PLANT_DATA_PATH = "data/tomato_wur_2026/sample_topology.csv"
+
+if transcription_format == "takahashi" and not uploaded_file:
+    VOYNICH_DATA_PATH = "data/transcriptions/sample_takahashi.txt"
+elif transcription_format == "currier" and not uploaded_file:
+    VOYNICH_DATA_PATH = "data/transcriptions/sample_currier.txt"
+
+# -----------------------------------------------------------------------------
+# 4. DATA PROCESSING PIPELINE
+# -----------------------------------------------------------------------------
+if uploaded_file is not None:
+    temp_path = "data/temp_uploaded_transcription.txt"
+    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+    with open(temp_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    M_V = parse_voynich_text(temp_path, active_section=target_section, format_type=transcription_format)
+else:
+    if os.path.exists(VOYNICH_DATA_PATH):
+        M_V = parse_voynich_text(VOYNICH_DATA_PATH, active_section=target_section, format_type=transcription_format)
+    else:
+        if target_section == "botanical":
+            M_V = np.array([[0.65, 0.25, 0.05, 0.05], [0.08, 0.72, 0.14, 0.06], [0.02, 0.08, 0.58, 0.32], [0.45, 0.05, 0.05, 0.45]])
+        else:
+            M_V = np.array([[0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25]])
+
+if os.path.exists(PLANT_DATA_PATH):
+    M_P = parse_organ_lifecycle_topology(PLANT_DATA_PATH)
+else:
+    M_P = np.array([[0.60, 0.30, 0.10, 0.00], [0.05, 0.75, 0.15, 0.05], [0.00, 0.10, 0.60, 0.30], [0.50, 0.00, 0.00, 0.50]])
+
+# -----------------------------------------------------------------------------
+# 5. JENSEN-SHANNON DISTANCE ENGINE
+# -----------------------------------------------------------------------------
+def kl_divergence(p, q):
+    p, q = np.asarray(p, dtype=np.float64), np.asarray(q, dtype=np.float64)
+    mask = (p > 0) & (q > 0)
+    return np.sum(p[mask] * np.log2(p[mask] / q[mask]))
+
+def jensen_shannon_divergence(M1, M2):
+    p, q = M1.flatten() / np.sum(M1), M2.flatten() / np.sum(M2)
+    m = 0.5 * (p + q)
+    return 0.5 * kl_divergence(p, m) + 0.5 * kl_divergence(q, m)
+
+observed_djs = jensen_shannon_divergence(M_V, M_P)
+
+null_distances = []
+np.random.seed(2026)
+for _ in range(num_sim_perms):
+    row_sums = M_V.sum(axis=1, keepdims=True)
+    col_sums = M_V.sum(axis=0, keepdims=True)
+    null_p = (row_sums @ col_sums) / (M_V.sum() ** 2)
+    M_V_null = np.nan_to_num(null_p / null_p.sum(axis=1, keepdims=True), nan=0.25)
+    null_distances.append(jensen_shannon_divergence(M_V_null, M_P))
+
+null_distances = np.array(null_distances)
+pseudo_p_value = np.sum(null_distances <= observed_djs) / num_sim_perms
+
+# -----------------------------------------------------------------------------
+# 6. APP LAYOUT AND GRAPHICAL RENDERING
+# -----------------------------------------------------------------------------
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("🌱 Plant Organ Lifecycle Matrix ($M_P$)")
+    df_p = pd.DataFrame(M_P, index=LIFECYCLE_STATES, columns=LIFECYCLE_STATES)
+    st.dataframe(df_p.style.background_gradient(cmap="Greens", axis=None), use_container_width=True)
+
+with col2:
+    st.subheader(f"📜 Textual Matrix: [{transcription_format.upper()} - {target_section.upper()}] ($M_V$)")
+    df_v = pd.DataFrame(M_V, index=LIFECYCLE_STATES, columns=LIFECYCLE_STATES)
+    st.dataframe(df_v.style.background_gradient(cmap="Purples", axis=None), use_container_width=True)
+
+st.divider()
+
+# Structural Metrics Readout
+stat_col1, stat_col2, stat_col3 = st.columns(3)
+stat_col1.metric("Observed System Distance ($D_{JS}$)", f"{observed_djs:.5f}")
+stat_col2.metric("Null Model Mean Baseline", f"{np.mean(null_distances):.5f}")
+stat_col3.metric("Empirical P-Value ($H_0$ Bound)", f"{pseudo_p_value:.4f}")
+
+# -----------------------------------------------------------------------------
+# NEW: 7. ADVANCED WAVE MECHANICS ANALYSIS PANEL
+# -----------------------------------------------------------------------------
+st.header("🔬 Bio-Harmonic Layer Integration")
+wave_col1, wave_col2, wave_col3 = st.columns(3)
+
+# Layer 1 Metrics: Base Frequency mapped from the spiral geometry scale factor
+trajectory_data = generate_trajectory(M_V, steps=400, window_len=window_len)
+coordinates, r_squared = project_to_spiral_space(trajectory_data)
+mean_radius = np.mean(np.sqrt(coordinates[:, 0]**2 + coordinates[:, 1]**2)) if len(coordinates) > 0 else 1.0
+
+base_frequency = growth_velocity * mean_radius
+wave_col1.metric("Base Vector Frequency ($\mathcal{f}$)", f"{base_frequency:.3f} Hz")
+
+# Layer 2 Metrics: Acoustic Velocity profile mapped to vessel retention bounds
+bulk_modulus = 2.15e9  # Standard fluid pressure scale constant
+density_profile = 1000 - (ambient_temp - 4) ** 2 * 0.008  # Temperature dependent fluid density expansion
+retention_velocity = np.sqrt(bulk_modulus / density_profile)
+wave_col2.metric("Vessel Retentive Velocity ($c$)", f"{retention_velocity:.2f} m/s")
+
+# Layer 3 Metrics: Phase Cancellation Counter-Hour Calculations
+counter_hour = (peak_disease_hour + 6) % 12
+if counter_hour == 0: counter_hour = 12
+wave_col3.metric("Counter-Phase Administration Target", f"Hour {counter_hour}:00", delta="180° Interference Shift")
+
+st.divider()
+
+# -----------------------------------------------------------------------------
+# 8. MONTE CARLO VARIANCE DISTRIBUTION
+# -----------------------------------------------------------------------------
+st.subheader("📊 Monte Carlo Variance Distribution ($H_0$ vs. Empirical Position)")
+fig_dist, ax_dist = plt.subplots(figsize=(8, 3.5), facecolor='#1e1e24')
+ax_dist.set_facecolor('#2d2d38')
+counts, bins, patches = ax_dist.hist(null_distances, bins=35, color="#8884d8", alpha=0.4, edgecolor="#1e1e24", label="Permuted Null States ($H_0$)")
+ax_dist.axvline(observed_djs, color="#e28743", linestyle="-", linewidth=2.5, label=f"Observed Metric ({observed_djs:.5f})")
+ax_dist.set_xlabel("Jensen-Shannon Divergence Score ($D_{JS}$)", color="#f4f4f9")
+ax_dist.set_ylabel("Permutation Frequency Count", color="#f4f4f9")
+ax_dist.tick_params(colors="#f4f4f9")
+ax_dist.grid(True, linestyle=":", alpha=0.2)
+ax_dist.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9')
+st.pyplot(fig_dist)
+
+# -----------------------------------------------------------------------------
+# 9. TRAJECTORY GENERATION AND SPIRAL PROJECTION
+# -----------------------------------------------------------------------------
+st.subheader("📉 Reduced State Space Trajectory Geometry: Logarithmic Path Mapping ($r(\\theta)$)")
+fig, ax = plt.subplots(figsize=(8, 4.5), facecolor='#1e1e24')
+ax.set_facecolor('#2d2d38')
+z1, z2 = coordinates[:, 0], coordinates[:, 1]
+ax.plot(z1, z2, color="#82ca9d", alpha=0.8, linewidth=2, label=f"Observed Path ($R^2={r_squared:.4f}$)")
+ax.scatter(z1[::50], z2[::50], color="#8884d8", edgecolor="#f4f4f9", s=40, zorder=5, label="Organ Transition Nodes")
+
+if len(z1) > 10 and target_section == "botanical":
+    theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
+    r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
+    z1_ideal = r_ideal * np.cos(theta_ideal)
+    z2_ideal = r_ideal * np.sin(theta_ideal)
+    ax.plot(z1_ideal, z2_ideal, color="#e28743", linestyle="--", alpha=0.6, label="Idealized Harvest Spiral Log-Fit")
+
+    theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
+    r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
+    z1_ideal = r_ideal * np.cos(theta_ideal)
+    z2_ideal = r_ideal * np.sin(theta_ideal)
+    ax.plot(z1_ideal, z2_ideal, color="#e28743", linestyle="--", alpha=0.6, label="Idealized Harvest Spiral Log-Fit")
+
+ax.set_xlabel("State Vector Projection Area ($Z_1$)", color="#f4f4f9")
+ax.set_ylabel("State Vector Projection Area ($Z_2$)", color="#f4f4f9")
+ax.tick_params(colors="#f4f4f9")
+ax.grid(True, linestyle=":", alpha=0.3)
+ax.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9')
+
+st.pyplot(fig)
