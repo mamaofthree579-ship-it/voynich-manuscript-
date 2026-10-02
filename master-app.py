@@ -6,46 +6,53 @@ import sqlite3
 import os
 
 # =====================================================================
-# 🛠️ 1. ENVIRONMENT, ENVIRONMENT SAFEGUARDS & DATABASE INITIALIZATION
+# 🛠️ 1. SAFE MULTI-THREADED DATABASE INITIALIZATION MATRIX
 # =====================================================================
 # Force path generation to guarantee Streamlit Cloud write permissions
 os.makedirs("temp", exist_ok=True)
-conn = sqlite3.connect("temp/voynich_database.db", check_same_thread=False)
-cursor = conn.cursor()
 
-# Create structured ledger table if it does not exist
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS profiles (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE,
-    system_mode TEXT,
-    pathology_or_circuit TEXT,
-    plant_a REAL,
-    plant_b REAL,
-    fluid_medium TEXT,
-    planetary_body TEXT,
-    vessel_material TEXT,
-    neck_geometry TEXT
-)
-""")
-conn.commit()
-
-# Automated Seed Engine: Populating the Master Historical Archetypes on first run
-default_presets = [
-    ("Folio 2v: Neurological Overdrive", "Organ-Tissue Pathology", "Neurological Overdrive (CNS Burnout)", 0.22, 0.00, "Water-Based Infusion", "Sun (3:2 Ratio)", "Thick Monastic Clay", "Cylindrical Restricted"),
-    ("Folio 78r: Lymphatic Circuit", "Balneological Fluid Circuits", "Clover Resonator (Folio 78r Preset)", 0.11, 0.05, "Wine/Alcohol Carrier", "Moon (4:3 Ratio)", "Early Venetian Glass", "Cylindrical Restricted"),
-    ("Hepatic Tissue Hardening Matrix", "Organ-Tissue Pathology", "Hepatic Stagnation (Tissue Hardening)", 0.22, 0.00, "Wine/Alcohol Carrier", "Moon (4:3 Ratio)", "Early Venetian Glass", "Cylindrical Restricted")
-]
-
-for preset in default_presets:
-    try:
+# Function to run initialization exactly ONCE to prevent "database is locked" errors
+@st.cache_resource
+def initialize_database_safely():
+    # check_same_thread=False allows Streamlit's multi-threading architecture to interact safely
+    conn = sqlite3.connect("temp/voynich_database.db", check_same_thread=False)
+    with conn: # Using a context manager automatically locks, commits, and releases the database file
+        cursor = conn.cursor()
         cursor.execute("""
-        INSERT INTO profiles (name, system_mode, pathology_or_circuit, plant_a, plant_b, fluid_medium, planetary_body, vessel_material, neck_geometry)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, preset)
-        conn.commit()
-    except sqlite3.IntegrityError:
-        pass # Preset already exists in ledger database; bypass safely
+        CREATE TABLE IF NOT EXISTS profiles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE,
+            system_mode TEXT,
+            pathology_or_circuit TEXT,
+            plant_a REAL,
+            plant_b REAL,
+            fluid_medium TEXT,
+            planetary_body TEXT,
+            vessel_material TEXT,
+            neck_geometry TEXT
+)
+        """)
+        
+        # Populating the Master Historical Archetypes safely
+        default_presets = [
+            ("Folio 2v: Neurological Overdrive", "Organ-Tissue Pathology", "Neurological Overdrive (CNS Burnout)", 0.22, 0.00, "Water-Based Infusion", "Sun (3:2 Ratio)", "Thick Monastic Clay", "Cylindrical Restricted"),
+            ("Folio 78r: Lymphatic Circuit", "Balneological Fluid Circuits", "Clover Resonator (Folio 78r Preset)", 0.11, 0.05, "Wine/Alcohol Carrier", "Moon (4:3 Ratio)", "Early Venetian Glass", "Cylindrical Restricted"),
+            ("Hepatic Tissue Hardening Matrix", "Organ-Tissue Pathology", "Hepatic Stagnation (Tissue Hardening)", 0.22, 0.00, "Wine/Alcohol Carrier", "Moon (4:3 Ratio)", "Early Venetian Glass", "Cylindrical Restricted")
+        ]
+
+        for preset in default_presets:
+            try:
+                cursor.execute("""
+                INSERT INTO profiles (name, system_mode, pathology_or_circuit, plant_a, plant_b, fluid_medium, planetary_body, vessel_material, neck_geometry)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, preset)
+            except sqlite3.IntegrityError:
+                pass # Preset already exist inside database layer; skip safely
+    return conn
+
+# Execute connection setup completely isolated from page refresh loops
+conn = initialize_database_safely()
+cursor = conn.cursor()
 
 # =====================================================================
 # 🎨 2. STREAMLIT APP MASTER CONFIG & LAYOUT
