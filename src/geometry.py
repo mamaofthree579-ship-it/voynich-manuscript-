@@ -1,3 +1,4 @@
+# Save this directly into src/geometry.py
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -60,7 +61,8 @@ def project_to_spiral_space(history_matrix):
     th = theta[mask]
     
     if len(th) > 2:
-        slope, intercept, r_value, _, _ = scipy_regression_fallback(th, ln_r)
+        # FIXED: Only unpack 3 values to completely eliminate the ValueError
+        slope, intercept, r_value = scipy_regression_fallback(th, ln_r)
         r_squared = r_value ** 2
     else:
         r_squared = 0.0
