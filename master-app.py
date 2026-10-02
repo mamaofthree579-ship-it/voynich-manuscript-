@@ -11,12 +11,11 @@ import os
 # Force path generation to guarantee Streamlit Cloud write permissions
 os.makedirs("temp", exist_ok=True)
 
-# Function to run initialization exactly ONCE to prevent "database is locked" errors
+# Function to run initialization exactly ONCE to prevent locked errors
 @st.cache_resource
 def initialize_database_safely():
-    # check_same_thread=False allows Streamlit's multi-threading architecture to interact safely
     conn = sqlite3.connect("temp/voynich_database.db", check_same_thread=False)
-    with conn: # Using a context manager automatically locks, commits, and releases the database file
+    with conn: # Using a context manager automatically releases database file locks
         cursor = conn.cursor()
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS profiles (
@@ -30,7 +29,7 @@ def initialize_database_safely():
             planetary_body TEXT,
             vessel_material TEXT,
             neck_geometry TEXT
-)
+        )
         """)
         
         # Populating the Master Historical Archetypes safely
@@ -47,7 +46,7 @@ def initialize_database_safely():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, preset)
             except sqlite3.IntegrityError:
-                pass # Preset already exist inside database layer; skip safely
+                pass # Preset already exists inside database layer; skip safely
     return conn
 
 # Execute connection setup completely isolated from page refresh loops
@@ -59,7 +58,7 @@ cursor = conn.cursor()
 # =====================================================================
 st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
 st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
-st.caption("Production Build (v5.0.0) | Integrated G-Code Simulator, SQLite Ledger & Self-Healing Cloud Directories.")
+st.caption("Production Build (v6.0.0) | Multi-Thread Lock Mitigation & Compliant Markdown Rendering Vectors.")
 
 # --- Database UI Profile Loader ---
 st.sidebar.header("📋 Database Profiles Ledger")
@@ -136,18 +135,17 @@ neck_geometry = st.sidebar.selectbox("Neck Geometry (Acoustic Transformer)", nec
 wall_thickness = st.sidebar.slider("Wall Thickness (mm)", 2.0, 15.0, 8.0, step=0.5)
 ambient_temp = st.sidebar.slider("Storage Cellar Temperature (°C)", 0.0, 50.0, 15.0, step=1.0)
 
-# --- Dynamic Automated Presets ---
+# =====================================================================
+# ⚙️ 3. CORE PHYSICS WAVE MECHANICS ENGINE
+# =====================================================================
 if system_mode == "Organ-Tissue Pathology":
     if pathology == "Neurological Overdrive (CNS Burnout)": disease_peak = 4
     elif pathology == "Hepatic Stagnation (Tissue Hardening)": disease_peak = 6
     elif pathology == "Respiratory Degradation (Elasticity Loss)": disease_peak = 1
     else: disease_peak = 4
 else:
-    disease_peak = 7 if system_mode == "Balneological Fluid Circuits" and "Clover" in locals() and "Clover" in pool_geometry else 3
+    disease_peak = 7 if system_mode == "Balneological Fluid Circuits" and "pool_geometry" in locals() and "Clover" in pool_geometry else 3
 
-# =====================================================================
-# ⚙️ 3. CORE WAVE MECHANICS COMPUTATION ENGINE
-# =====================================================================
 f1 = 440.0 * (plant_a_factor / 0.22)
 f2 = 440.0 * (plant_b_factor / 0.22) if compounding_tier != "Single Herb Extract" else 0.0
 f3 = 440.0 * (plant_c_factor / 0.22) if compounding_tier == "Triple-Plant Envelope" else 0.0
@@ -171,11 +169,8 @@ k_val = 0.2 if vessel_material == "Thick Monastic Clay" else 0.9
 retention_hours = ((wall_thickness / 1000.0) / k_val) * 100.0
 counter_hour = (disease_peak + 4) if disease_peak <= 4 else (disease_peak - 4)
 
-# Seal Boundary Measurements
 wavelength_mm = (wave_speed / target_freq) * 1000.0
-r1 = 25.0
-r2 = r1 * np.sqrt(2)
-r3 = r1 * 1.618
+r1 = 25.0; r2 = r1 * np.sqrt(2); r3 = r1 * 1.618
 
 # =====================================================================
 # 📊 4. USER INTERFACE GRAPHICS & DATA RENDERING
@@ -210,40 +205,31 @@ with col1:
     
     fig, ax = plt.subplots(figsize=(6, 3.2))
     ax.plot(t, wave_y, color="#FF4B4B")
-    ax.set_facecolor('#0e1117')
-    fig.patch.set_facecolor('#0e1117')
+    ax.set_facecolor('#0e1117'); fig.patch.set_facecolor('#0e1117')
     ax.tick_params(colors='white')
     st.pyplot(fig)
 
 with col2:
     st.subheader("⏳ G-Code Machine Simulation Preview")
-    st.caption("Live feed tracing tool movements (Rapid tool travel paths vs G02/G03 loops) inside the seal boundary matrix.")
+    st.caption("Live feed tracing tool movements (Rapid tool paths vs G02/G03 loops) inside the seal boundary matrix.")
     
-    # --- CNC Toolpath Visualizer Component ---
     theta_vals = np.linspace(0, 2 * np.pi, 200)
-    
     fig_cnc, ax_cnc = plt.subplots(figsize=(6, 4.2))
-    ax_cnc.set_facecolor('#0e1117')
-    fig_cnc.patch.set_facecolor('#0e1117')
+    ax_cnc.set_facecolor('#0e1117'); fig_cnc.patch.set_facecolor('#0e1117')
     
-    # Trace standard machine home alignment markers
     ax_cnc.scatter(0, 0, color='lime', marker='+', s=150, label='Machine Zero (X0, Y0)')
-    
-    # FIX: Corrected missing coordinates [0, 0] for X axis trajectory to prevent script crashes
     ax_cnc.plot([0, 0], [0, r3], color='orange', linestyle=':', alpha=0.7, label='G00 Rapid Feed Trajectory')
     
-    # Reconstruct concentric tool circular interpolations (G02/G03 loops)
-    ax_cnc.plot(r3 * np.cos(theta_vals), r3 * np.sin(theta_vals), color='#FF4B4B', linewidth=1.5, label='Outer Boundary Loop (Damping Rim)')
-    ax_cnc.plot(r2 * np.cos(theta_vals), r2 * np.sin(theta_vals), color='teal', linewidth=2.0, label='Middle Circle Loop (Impedance Node)')
-    ax_cnc.plot(r1 * np.cos(theta_vals), r1 * np.sin(theta_vals), color='white', linewidth=2.5, label='Inner Circle Loop (Phase Core)')
+    ax_cnc.plot(r3 * np.cos(theta_vals), r3 * np.sin(theta_vals), color='#FF4B4B', linewidth=1.5, label='Outer Boundary Loop')
+    ax_cnc.plot(r2 * np.cos(theta_vals), r2 * np.sin(theta_vals), color='teal', linewidth=2.0, label='Middle Circle Loop')
+    ax_cnc.plot(r1 * np.cos(theta_vals), r1 * np.sin(theta_vals), color='white', linewidth=2.5, label='Inner Circle Loop')
     
-    ax_cnc.tick_params(colors='white')
-    ax_cnc.axis('equal')
+    ax_cnc.tick_params(colors='white'); ax_cnc.axis('equal')
     ax_cnc.grid(color='gray', linestyle='--', alpha=0.3)
     ax_cnc.legend(labelcolor='white', loc='lower right', fontsize='small')
     st.pyplot(fig_cnc)
 
-        st.write("#### 🔘 Scalable Vector Graphic (SVG) Blueprint Layout")
+    st.write("#### 🔘 Scalable Vector Graphic (SVG) Blueprint Layout")
     svg_blueprint = f"""
     <svg width="100%" height="130" viewBox="0 0 200 200" xmlns="http://w3.org">
         <rect width="100%" height="100%" fill="#0e1117"/>
@@ -252,7 +238,6 @@ with col2:
         <circle cx="100" cy="100" r="{r1 * 1.5}" stroke="white" stroke-width="3" fill="none"/>
     </svg>
     """
-    # Safe alternative formatting that will never be removed by Streamlit updates
     st.markdown(f'<div style="display: flex; justify-content: center;">{svg_blueprint}</div>', unsafe_allow_html=True)
 
 # =====================================================================
@@ -266,9 +251,8 @@ c_slots = st.columns(9)
 for idx, name in enumerate(panels, 1):
     with c_slots[idx-1]:
         if idx == disease_peak:
-            st.error(f"🔴 P{idx}\n{name}\n[Stagnation Peak]")
+            st.error(f"🔴 P{idx}\n{name}\n[Stagnation]")
         elif idx == counter_hour:
-            st.success(f"🟢 P{idx}\n{name}\n[Infusion Vector]")
+            st.success(f"🟢 P{idx}\n{name}\n[Infusion]")
         else:
             st.info(f"⚪ P{idx}\n{name}\n[Baseline]")
-
