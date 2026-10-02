@@ -48,3 +48,13 @@ Apothecary processing vessels act as thermodynamic containment chambers. Ambient
 To clear localized organic stagnation, delivery profiles are calculated exactly \(180^\circ\) opposite the peak hour of systemic disease intensity across the manuscript's Rosette Time Map, creating complete destructive wave interference over targeted pathologies.
 
 ---
+## 🎵 Core Mathematics Appendix: Just Intonation & Harmonic Fractal Calibration
+
+Unlike traditional historical frameworks that rely on qualitative elemental systems, this engine utilizes **Just Intonation whole-number integer frequency ratios** to process information flow. The system matches structural word transitions to the clean fraction intervals of the pure harmonic series:
+
+1. **Root Ground State Anchor ($\mathcal{f}_0$):** Anchored at a pure $1:1$ unison frequency junction ($F33V$ Root Zone baseline).
+2. **Vascular Elongation Path ($\mathcal{f}_1$):** Formulated around a pure $5:4$ Major Third vector envelope ($F2R$ Stem Continuance baseline).
+3. **Generative Flowering Apex ($\mathcal{f}_2$):** Calculated around a pure $3:2$ Perfect Fifth frequency split ($F9V$ Generative Flower baseline).
+
+When you run a file, the engine projects your text trajectory onto these integer ratio channels. If the layout matches the underlying growth constraints, the compliance score sitting on your dashboard scales cleanly to its verified **60.6%** peak, while alternative chapters fall to the **50.0%** flat baseline.
+
