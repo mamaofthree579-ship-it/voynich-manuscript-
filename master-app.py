@@ -5,26 +5,46 @@ import math
 import sqlite3
 import os
 
-# Master Configuration
-st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
-st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
-st.caption("Final Master Production Build (v5.0.0) | Complete Physics Integration with Local Database Logging & G-Code Visualization.")
-
-# Initialize Local Database Layer
+# --- 1. ENVIRONMENT & DATABASE INITIALIZATION MATRIX ---
 os.makedirs("temp", exist_ok=True)
 conn = sqlite3.connect("temp/voynich_database.db", check_same_thread=False)
 cursor = conn.cursor()
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS patient_profiles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        pathology TEXT,
-        fluid_medium TEXT,
-        target_freq REAL,
-        counter_hour TEXT
-    )
-''')
+
+# Create structural ledger table if it does not exist
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE,
+    system_mode TEXT,
+    pathology_or_circuit TEXT,
+    plant_a REAL,
+    plant_b REAL,
+    fluid_medium TEXT,
+    planetary_body TEXT,
+    vessel_material TEXT,
+    neck_geometry TEXT
+)
+""")
 conn.commit()
+
+# Automated Seed Engine: Populating the Master Historical Archetypes
+default_presets = [
+    ("Folio 2v: Neurological Overdrive", "Organ-Tissue Pathology", "Neurological Overdrive (CNS Burnout)", 0.22, 0.00, "Water-Based Infusion", "Sun (3:2 Ratio)", "Thick Monastic Clay", "Cylindrical Restricted"),
+    ("Folio 78r: Lymphatic Circuit", "Balneological Fluid Circuits", "Clover Resonator (Folio 78r Preset)", 0.11, 0.05, "Wine/Alcohol Carrier", "Moon (4:3 Ratio)", "Early Venetian Glass", "Cylindrical Restricted"),
+    ("Hepatic Tissue Hardening Matrix", "Organ-Tissue Pathology", "Hepatic Stagnation (Tissue Hardening)", 0.22, 0.00, "Wine/Alcohol Carrier", "Moon (4:3 Ratio)", "Early Venetian Glass", "Cylindrical Restricted")
+]
+
+for preset in default_presets:
+    try:
+        cursor.execute("""
+        INSERT INTO profiles (name, system_mode, pathology_or_circuit, plant_a, plant_b, fluid_medium, planetary_body, vessel_material, neck_geometry)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, preset)
+        conn.commit()
+    except sqlite3.IntegrityError:
+        # Preset already exists in ledger database; proceed silently
+        pass
+
 
 # Sidebar - System Configurations
 st.sidebar.header("1. Framework System Mode")
