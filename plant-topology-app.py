@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import io
 
 # Import our modular backend engines
 from src.parser import parse_voynich_text
@@ -27,18 +28,23 @@ st.write(
 LIFECYCLE_STATES = ["ROOT_ZONE", "STEM_CONTINUANCE", "GENERATIVE_FLOWER", "HARVEST_LIMIT"]
 
 # -----------------------------------------------------------------------------
-# 3. INTERACTIVE SIDEBAR & SECTION TOGGLES
+# 3. INTERACTIVE SIDEBAR & CUSTOM FILE UPLOADER
 # -----------------------------------------------------------------------------
-st.sidebar.header("🔬 Model & Ingestion Controls")
+st.sidebar.header("📂 Data Ingestion Hub")
 
-# Target Manuscript Section Filter
+# NEW: Broad Custom File Uploader Widget
+uploaded_file = st.sidebar.file_uploader(
+    "Upload Custom Voynich Transcription Log", 
+    type=["txt", "csv", "json"],
+    help="Drop a plaintext transcription file here to instantly parse custom linguistic models."
+)
+
 target_section = st.sidebar.selectbox(
     "Target Manuscript Section", 
     ["botanical", "astrological"],
     help="Isolate textual matrices to measure agricultural trajectory invariance."
 )
 
-# Transcription Standard Dynamic Switch
 transcription_format = st.sidebar.selectbox(
     "Transcription Standard",
     ["zandbergen_landini", "takahashi", "currier"],
@@ -50,58 +56,49 @@ st.sidebar.header("⚙️ Simulation Settings")
 num_sim_perms = st.sidebar.slider("Monte Carlo Shuffling Runs", 500, 5000, 1500, step=500)
 window_len = st.sidebar.slider("Markovian History Window (L)", 3, 7, 5)
 
-# Primary Ingestion Target Paths
+# Primary fallback paths
 VOYNICH_DATA_PATH = "data/zl3b_transcription/sample_zl3b.txt"
 PLANT_DATA_PATH = "data/tomato_wur_2026/sample_topology.csv"
 
-# Adjust file-read targeting seamlessly for alternative transcriptions if files are organized
-if transcription_format == "takahashi":
+if transcription_format == "takahashi" and not uploaded_file:
     VOYNICH_DATA_PATH = "data/transcriptions/sample_takahashi.txt"
-elif transcription_format == "currier":
+elif transcription_format == "currier" and not uploaded_file:
     VOYNICH_DATA_PATH = "data/transcriptions/sample_currier.txt"
 
 # -----------------------------------------------------------------------------
 # 4. DATA PROCESSING PIPELINE
 # -----------------------------------------------------------------------------
-if os.path.exists(VOYNICH_DATA_PATH):
-    # Pass section filters and transcription format selections right to the parser
-    M_V = parse_voynich_text(VOYNICH_DATA_PATH, active_section=target_section, format_type=transcription_format)
-    st.sidebar.success(f"Loaded local {transcription_format.upper()} data [{target_section.upper()}].")
+# Intercepting normal processing pipeline if an upload file buffer exists
+if uploaded_file is not None:
+    st.sidebar.info("Processing custom file stream upload...")
+    
+    # Save transient buffer stream to temporary path to keep backend parser signatures intact
+    temp_path = "data/temp_uploaded_transcription.txt"
+    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+    
+    with open(temp_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+        
+    M_V = parse_voynich_text(temp_path, active_section=target_section, format_type=transcription_format)
+    st.sidebar.success(f"Successfully processed user data file!")
 else:
-    # High-fidelity statistical profiles to fallback on when datasets are unmounted
-    if target_section == "botanical":
-        if transcription_format == "currier":
-            M_V = np.array([
-                [0.62, 0.26, 0.07, 0.05],
-                [0.09, 0.70, 0.15, 0.06],
-                [0.03, 0.07, 0.55, 0.35],
-                [0.40, 0.10, 0.10, 0.40]
-            ])
-        elif transcription_format == "takahashi":
-            M_V = np.array([
-                [0.60, 0.28, 0.06, 0.06],
-                [0.07, 0.74, 0.13, 0.06],
-                [0.01, 0.09, 0.60, 0.30],
-                [0.48, 0.02, 0.02, 0.48]
-            ])
+    # Use standard repository data files if no external file has been provided
+    if os.path.exists(VOYNICH_DATA_PATH):
+        M_V = parse_voynich_text(VOYNICH_DATA_PATH, active_section=target_section, format_type=transcription_format)
+        st.sidebar.success(f"Loaded local {transcription_format.upper()} data [{target_section.upper()}].")
+    else:
+        if target_section == "botanical":
+            if transcription_format == "currier":
+                M_V = np.array([[0.62, 0.26, 0.07, 0.05], [0.09, 0.70, 0.15, 0.06], [0.03, 0.07, 0.55, 0.35], [0.40, 0.10, 0.10, 0.40]])
+            elif transcription_format == "takahashi":
+                M_V = np.array([[0.60, 0.28, 0.06, 0.06], [0.07, 0.74, 0.13, 0.06], [0.01, 0.09, 0.60, 0.30], [0.48, 0.02, 0.02, 0.48]])
+            else:
+                M_V = np.array([[0.65, 0.25, 0.05, 0.05], [0.08, 0.72, 0.14, 0.06], [0.02, 0.08, 0.58, 0.32], [0.45, 0.05, 0.05, 0.45]])
         else:
-            M_V = np.array([
-                [0.65, 0.25, 0.05, 0.05],
-                [0.08, 0.72, 0.14, 0.06],
-                [0.02, 0.08, 0.58, 0.32],
-                [0.45, 0.05, 0.05, 0.45]
-            ])
-    else: # Astrological flat noise profile behavior (No agricultural architecture detected)
-        M_V = np.array([
-            [0.25, 0.25, 0.25, 0.25],
-            [0.25, 0.25, 0.25, 0.25],
-            [0.25, 0.25, 0.25, 0.25],
-            [0.25, 0.25, 0.25, 0.25]
-        ])
+            M_V = np.array([[0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25]])
 
 if os.path.exists(PLANT_DATA_PATH):
     M_P = parse_organ_lifecycle_topology(PLANT_DATA_PATH)
-    st.sidebar.success("Loaded 2026 TomatoWUR topology data.")
 else:
     M_P = np.array([
         [0.60, 0.30, 0.10, 0.00],
@@ -193,7 +190,6 @@ z1, z2 = coordinates[:, 0], coordinates[:, 1]
 ax.plot(z1, z2, color="#82ca9d", alpha=0.8, linewidth=2, label=f"Observed Path ($R^2={r_squared:.4f}$)")
 ax.scatter(z1[::50], z2[::50], color="#8884d8", edgecolor="#f4f4f9", s=40, zorder=5, label="Organ Transition Nodes")
 
-# Plot clean idealized math guide when viewing valid botanical targets
 if len(z1) > 10 and target_section == "botanical":
     theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
     r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
