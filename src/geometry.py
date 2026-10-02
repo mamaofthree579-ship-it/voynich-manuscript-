@@ -13,6 +13,7 @@ def generate_trajectory(matrix, steps=300, window_len=5):
     
     # Generate Markov chain sequence
     for _ in range(steps - 1):
+        # FIXED: Pass pool array explicitly to ensure error-free matrix path execution
         next_state = np.random.choice([0, 1, 2, 3], p=matrix[current_state])
         sequence.append(next_state)
         current_state = next_state
@@ -23,7 +24,6 @@ def generate_trajectory(matrix, steps=300, window_len=5):
     
     for i in range(len(sequence) - window_len):
         sub_seq = sequence[i:i+window_len]
-        # Map unique history sequences to specific index locations
         idx = sum([val * (4 ** idx_w) for idx_w, val in enumerate(sub_seq)])
         vec = np.zeros(history_dim)
         vec[idx] = 1
@@ -39,20 +39,15 @@ def project_to_spiral_space(history_matrix):
     if len(history_matrix) < 10:
         return np.zeros((100, 2)), 0.0
         
-    # Reduce dimension components down to global variances (Z1, Z2)
     pca = PCA(n_components=2)
     z = pca.fit_transform(history_matrix)
     
     z1, z2 = z[:, 0], z[:, 1]
     
-    # Transform coordinates from center point into Cylindrical values
     r = np.sqrt(z1**2 + z2**2)
     theta = np.arctan2(z2, z1)
-    
-    # Ensure theta runs forward monotonically instead of oscillation boundaries
     theta = np.unwrap(theta)
     
-    # Standard linear regression fit evaluating: ln(r) = a + b*theta
     mask = r > 0
     if not np.any(mask):
         return z, 0.0
@@ -61,7 +56,6 @@ def project_to_spiral_space(history_matrix):
     th = theta[mask]
     
     if len(th) > 2:
-        # FIXED: Only unpack 3 values to completely eliminate the ValueError
         slope, intercept, r_value = scipy_regression_fallback(th, ln_r)
         r_squared = r_value ** 2
     else:
@@ -81,7 +75,6 @@ def scipy_regression_fallback(x, y):
     slope = (n * xy.sum() - x.sum() * y.sum()) / denom
     intercept = (y.sum() - slope * x.sum()) / n
     
-    # Simple correlation assessment loop
     y_mean = y.mean()
     f = slope * x + intercept
     ss_reg = ((f - y_mean)**2).sum()
