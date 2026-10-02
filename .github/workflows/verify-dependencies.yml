@@ -34,6 +34,10 @@ jobs:
       run: |
         python tests/validate_schema.py
 
+    - name: 🎵 Execute Just Intonation Fractal Verification
+      run: |
+        python tests/test_harmonic_fractal.py
+
     - name: ⏱️ Execute Computational Speed Benchmarks
       run: |
         python tests/test_benchmarks.py
