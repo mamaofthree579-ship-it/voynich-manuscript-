@@ -243,7 +243,7 @@ with col2:
     ax_cnc.legend(labelcolor='white', loc='lower right', fontsize='small')
     st.pyplot(fig_cnc)
 
-    st.write("#### 🔘 Scalable Vector Graphic (SVG) Blueprint Layout")
+        st.write("#### 🔘 Scalable Vector Graphic (SVG) Blueprint Layout")
     svg_blueprint = f"""
     <svg width="100%" height="130" viewBox="0 0 200 200" xmlns="http://w3.org">
         <rect width="100%" height="100%" fill="#0e1117"/>
@@ -252,7 +252,8 @@ with col2:
         <circle cx="100" cy="100" r="{r1 * 1.5}" stroke="white" stroke-width="3" fill="none"/>
     </svg>
     """
-    st.components.v1.html(svg_blueprint, height=140)
+    # Safe alternative formatting that will never be removed by Streamlit updates
+    st.markdown(f'<div style="display: flex; justify-content: center;">{svg_blueprint}</div>', unsafe_allow_html=True)
 
 # =====================================================================
 # ⏳ 5. COSMOLOGICAL SCHEDULER TIMELINE VIEW
