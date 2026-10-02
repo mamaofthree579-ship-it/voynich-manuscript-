@@ -32,7 +32,6 @@ LIFECYCLE_STATES = ["ROOT_ZONE", "STEM_CONTINUANCE", "GENERATIVE_FLOWER", "HARVE
 # -----------------------------------------------------------------------------
 st.sidebar.header("📂 Data Ingestion Hub")
 
-# NEW: Broad Custom File Uploader Widget
 uploaded_file = st.sidebar.file_uploader(
     "Upload Custom Voynich Transcription Log", 
     type=["txt", "csv", "json"],
@@ -68,21 +67,15 @@ elif transcription_format == "currier" and not uploaded_file:
 # -----------------------------------------------------------------------------
 # 4. DATA PROCESSING PIPELINE
 # -----------------------------------------------------------------------------
-# Intercepting normal processing pipeline if an upload file buffer exists
 if uploaded_file is not None:
     st.sidebar.info("Processing custom file stream upload...")
-    
-    # Save transient buffer stream to temporary path to keep backend parser signatures intact
     temp_path = "data/temp_uploaded_transcription.txt"
     os.makedirs(os.path.dirname(temp_path), exist_ok=True)
-    
     with open(temp_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
-        
     M_V = parse_voynich_text(temp_path, active_section=target_section, format_type=transcription_format)
     st.sidebar.success(f"Successfully processed user data file!")
 else:
-    # Use standard repository data files if no external file has been provided
     if os.path.exists(VOYNICH_DATA_PATH):
         M_V = parse_voynich_text(VOYNICH_DATA_PATH, active_section=target_section, format_type=transcription_format)
         st.sidebar.success(f"Loaded local {transcription_format.upper()} data [{target_section.upper()}].")
@@ -176,7 +169,42 @@ else:
     st.warning("⚠️ **Hypothesis Maintained:** Divergence falls within statistical margins of chance baseline fluctuations.")
 
 # -----------------------------------------------------------------------------
-# 7. TRAJECTORY GENERATION AND SPIRAL PROJECTION
+# NEW: 7. ADVANCED DISTRIBUTED MODEL ANALYSIS (HISTOGRAM)
+# -----------------------------------------------------------------------------
+st.subheader("📊 Monte Carlo Variance Distribution ($H_0$ vs. Empirical Position)")
+
+fig_dist, ax_dist = plt.subplots(figsize=(8, 3.5), facecolor='#1e1e24')
+ax_dist.set_facecolor('#2d2d38')
+
+# Draw Permutation Histogram
+counts, bins, patches = ax_dist.hist(
+    null_distances, bins=35, color="#8884d8", alpha=0.4, 
+    edgecolor="#1e1e24", label="Permuted Null States ($H_0$)"
+)
+
+# Overlay an explicit vertical boundary line marking the true observed evaluation point
+ax_dist.axvline(
+    observed_djs, color="#e28743", linestyle="-", linewidth=2.5,
+    label=f"Observed Metric ({observed_djs:.5f})"
+)
+
+# Annotate Significance Zones
+if observed_djs < np.min(null_distances):
+    ax_dist.text(
+        observed_djs * 1.02, max(counts) * 0.7, "Significant Real Outlier", 
+        color="#e28743", fontsize=10, weight="bold"
+    )
+
+ax_dist.set_xlabel("Jensen-Shannon Divergence Score ($D_{JS}$)", color="#f4f4f9")
+ax_dist.set_ylabel("Permutation Frequency Count", color="#f4f4f9")
+ax_dist.tick_params(colors="#f4f4f9")
+ax_dist.grid(True, linestyle=":", alpha=0.2)
+ax_dist.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9')
+
+st.pyplot(fig_dist)
+
+# -----------------------------------------------------------------------------
+# 8. TRAJECTORY GENERATION AND SPIRAL PROJECTION
 # -----------------------------------------------------------------------------
 st.subheader("📉 Reduced State Space Trajectory Geometry: Logarithmic Path Mapping ($r(\\theta)$)")
 
@@ -194,6 +222,11 @@ if len(z1) > 10 and target_section == "botanical":
     theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
     r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
     z1_ideal = r_ideal * np.cos(theta_ideal)
+
+    theta_ideal = np.linspace(0, 4 * np.pi, len(z1))
+    r_ideal = 0.1 * np.exp(0.15 * theta_ideal)
+    z1_ideal = r_ideal * np.cos(theta_ideal)
+    # Complete mathematical projection onto the Cartesian plane
     z2_ideal = r_ideal * np.sin(theta_ideal)
     ax.plot(z1_ideal, z2_ideal, color="#e28743", linestyle="--", alpha=0.6, label="Idealized Harvest Spiral Log-Fit")
 
@@ -204,3 +237,4 @@ ax.grid(True, linestyle=":", alpha=0.3)
 ax.legend(facecolor='#1e1e24', edgecolor='none', labelcolor='#f4f4f9')
 
 st.pyplot(fig)
+
