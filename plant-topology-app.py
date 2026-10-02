@@ -174,10 +174,10 @@ base_frequency = growth_velocity * mean_radius
 wave_col1.metric("Base Vector Frequency (\(\mathcal{f}\))", f"{base_frequency:.3f} Hz")
 
 bulk_modulus = 2.15e9
+bulk_modulus = 2.15e9
 density_profile = 1000 - (ambient_temp - 4) ** 2 * 0.008
-retention_velocity = np.sqrt(bulk_modulus / density_profile)
+retentive_velocity = np.sqrt(bulk_modulus / density_profile) # Fixed variable name
 wave_col2.metric("Vessel Retentive Velocity (c)", f"{retentive_velocity:.2f} m/s")
-
 counter_hour = (peak_disease_hour + 6) % 12
 if counter_hour == 0: counter_hour = 12
 wave_col3.metric("Counter-Phase Administration Target", f"Hour {counter_hour}:00", delta="180° Interference Shift")
