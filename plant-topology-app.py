@@ -178,9 +178,20 @@ bulk_modulus = 2.15e9
 density_profile = 1000 - (ambient_temp - 4) ** 2 * 0.008
 base_retentive_velocity = np.sqrt(bulk_modulus / density_profile)
 
-# Route calculated velocities through the 9-Panel Rosette Spatial Engine
+# Save as the updated Rosette Mapping Block inside plant-topology-app.py
+# Route calculated base velocities directly through the 9-Panel Spatial Array
 rosette_data = calculate_rosette_spatial_resonance(rosette_panel, base_retentive_velocity)
-wave_col2.metric(f"Vessel Velocity [Lens {rosette_panel}: {rosette_data['panel_name']}]", f"{rosette_data['tuned_velocity']:.2f} m/s", delta=f"Index: {rosette_data['resonance_index']:.3f}")
+
+# Dynamically couple the Rosette resonance index to subtly tune the final compliance readout
+pharma_data = calculate_pharma_compliance(target_folio_key, r_squared, float(ambient_temp))
+tuned_compliance = min(100.0, max(0.0, pharma_data['compliance_score'] * rosette_data['resonance_index']))
+
+p_col1, p_col2, p_col3, p_col4 = st.columns(4)
+p_col1.metric("Modern Plant Equivalent", str(pharma_data['specimen']))
+p_col2.metric("Active Organic Compound", str(pharma_data['compound']))
+p_col3.metric("Optimal Preservation Temp", f"{pharma_data['optimal_temp']} °C")
+p_col4.metric("Tuned Compliance Score", f"{tuned_compliance:.1f}%", delta=f"Lens Shift: {(rosette_data['resonance_index'] - 1.0)*100:.1f}%")
+
 
 counter_hour = (peak_disease_hour + 6) % 12
 if counter_hour == 0: counter_hour = 12
