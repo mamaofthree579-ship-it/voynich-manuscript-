@@ -5,12 +5,15 @@ import math
 import sqlite3
 import os
 
-# --- 1. ENVIRONMENT & DATABASE INITIALIZATION MATRIX ---
+# =====================================================================
+# 🛠️ 1. ENVIRONMENT, ENVIRONMENT SAFEGUARDS & DATABASE INITIALIZATION
+# =====================================================================
+# Force path generation to guarantee Streamlit Cloud write permissions
 os.makedirs("temp", exist_ok=True)
 conn = sqlite3.connect("temp/voynich_database.db", check_same_thread=False)
 cursor = conn.cursor()
 
-# Create structural ledger table if it does not exist
+# Create structured ledger table if it does not exist
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +30,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 """)
 conn.commit()
 
-# Automated Seed Engine: Populating the Master Historical Archetypes
+# Automated Seed Engine: Populating the Master Historical Archetypes on first run
 default_presets = [
     ("Folio 2v: Neurological Overdrive", "Organ-Tissue Pathology", "Neurological Overdrive (CNS Burnout)", 0.22, 0.00, "Water-Based Infusion", "Sun (3:2 Ratio)", "Thick Monastic Clay", "Cylindrical Restricted"),
     ("Folio 78r: Lymphatic Circuit", "Balneological Fluid Circuits", "Clover Resonator (Folio 78r Preset)", 0.11, 0.05, "Wine/Alcohol Carrier", "Moon (4:3 Ratio)", "Early Venetian Glass", "Cylindrical Restricted"),
@@ -42,26 +45,52 @@ for preset in default_presets:
         """, preset)
         conn.commit()
     except sqlite3.IntegrityError:
-        # Preset already exists in ledger database; proceed silently
-        pass
+        pass # Preset already exists in ledger database; bypass safely
 
+# =====================================================================
+# 🎨 2. STREAMLIT APP MASTER CONFIG & LAYOUT
+# =====================================================================
+st.set_page_config(page_title="Voynich Master Wave Mechanics Engine", layout="wide")
+st.title("📜 Voynich Manuscript Master Wave Mechanics Engine")
+st.caption("Production Build (v5.0.0) | Integrated G-Code Simulator, SQLite Ledger & Self-Healing Cloud Directories.")
 
-# Sidebar - System Configurations
-st.sidebar.header("1. Framework System Mode")
-system_mode = st.sidebar.selectbox("Select Analysis Matrix", [
-    "Zodiac Carrier Modulators", 
-    "Balneological Fluid Circuits", 
-    "Organ-Tissue Pathology", 
-    "Pharmaceutical Vessel Tuning"
-])
+# --- Database UI Profile Loader ---
+st.sidebar.header("📋 Database Profiles Ledger")
+saved_profiles = cursor.execute("SELECT name FROM profiles").fetchall()
+profile_list = [p[0] for p in saved_profiles]
+selected_profile = st.sidebar.selectbox("Load Reconstructed Archetype:", ["Manual Configuration Input"] + profile_list)
+
+# Fallback defaults if manual configuration is chosen
+db_system_mode = "Organ-Tissue Pathology"
+db_pathology = "General Baseline Tuning"
+db_plant_a = 0.22
+db_plant_b = 0.00
+db_medium = "Wine/Alcohol Carrier"
+db_planet = "Sun (3:2 Ratio)"
+db_vessel = "Early Venetian Glass"
+db_neck = "Cylindrical Restricted"
+
+if selected_profile != "Manual Configuration Input":
+    db_data = cursor.execute("SELECT * FROM profiles WHERE name = ?", (selected_profile,)).fetchone()
+    if db_data:
+        db_system_mode = db_data[2]
+        db_pathology = db_data[3]
+        db_plant_a = db_data[4]
+        db_plant_b = db_data[5]
+        db_medium = db_data[6]
+        db_planet = db_data[7]
+        db_vessel = db_data[8]
+        db_neck = db_data[9]
+        st.sidebar.success(f"Loaded: {selected_profile}")
+
+# --- Sidebar Inputs Matrix ---
+st.sidebar.header("1. Core Analysis Matrix")
+system_mode_opts = ["Zodiac Carrier Modulators", "Balneological Fluid Circuits", "Organ-Tissue Pathology", "Pharmaceutical Vessel Tuning"]
+system_mode = st.sidebar.selectbox("Select Mode Architecture", system_mode_opts, index=system_mode_opts.index(db_system_mode) if db_system_mode in system_mode_opts else 2)
 
 if system_mode == "Organ-Tissue Pathology":
-    pathology = st.sidebar.selectbox("Select Target Tissue System", [
-        "General Baseline Tuning",
-        "Neurological Overdrive (CNS Burnout)",
-        "Hepatic Stagnation (Tissue Hardening)",
-        "Respiratory Degradation (Elasticity Loss)"
-    ])
+    opts = ["General Baseline Tuning", "Neurological Overdrive (CNS Burnout)", "Hepatic Stagnation (Tissue Hardening)", "Respiratory Degradation (Elasticity Loss)"]
+    pathology = st.sidebar.selectbox("Select Target Tissue System", opts, index=opts.index(db_pathology) if db_pathology in opts else 0)
 elif system_mode == "Balneological Fluid Circuits":
     st.sidebar.markdown("---")
     st.sidebar.subheader("🌊 Hydro-Circuit Variables")
@@ -80,35 +109,38 @@ else:
     vessel_volume_ml = st.sidebar.slider("Calculated Chamber Volume (V)", 50, 1000, 250, step=50)
     neck_length_mm = st.sidebar.slider("Illustrated Throat Length (L)", 10, 100, 35, step=5)
 
-st.sidebar.header("2. Triple-Plant Compounding Engine")
-compounding_tier = st.sidebar.selectbox("Compounding Complexity", ["Single Herb Extract", "Dual-Plant Compounding", "Triple-Plant Envelope"])
-plant_a_factor = st.sidebar.slider("Plant A Spiral Factor", 0.05, 0.50, 0.22, step=0.01)
-plant_b_factor = st.sidebar.slider("Plant B Spiral Factor", 0.05, 0.50, 0.15, step=0.01) if compounding_tier != "Single Herb Extract" else 0.0
+st.sidebar.header("2. Compounding & Material Variables")
+compounding_tier = st.sidebar.selectbox("Compounding Complexity", ["Single Herb Extract", "Dual-Plant Compounding", "Triple-Plant Envelope"], index=1 if db_plant_b > 0.0 else 0)
+plant_a_factor = st.sidebar.slider("Plant A Spiral Factor", 0.05, 0.50, float(db_plant_a), step=0.01)
+plant_b_factor = st.sidebar.slider("Plant B Spiral Factor", 0.05, 0.50, float(db_plant_b) if db_plant_b > 0.0 else 0.15, step=0.01) if compounding_tier != "Single Herb Extract" else 0.0
 plant_c_factor = st.sidebar.slider("Plant C Spiral Factor", 0.05, 0.50, 0.11, step=0.01) if compounding_tier == "Triple-Plant Envelope" else 0.0
 
-st.sidebar.header("3. Medium & Closure Mechanics")
-fluid_medium = st.sidebar.selectbox("Fluid Extraction Medium", ["Wine/Alcohol Carrier", "Water-Based Infusion", "Infused Vegetable Oil Base"])
+med_opts = ["Wine/Alcohol Carrier", "Water-Based Infusion", "Infused Vegetable Oil Base"]
+fluid_medium = st.sidebar.selectbox("Fluid Extraction Medium", med_opts, index=med_opts.index(db_medium) if db_medium in med_opts else 0)
 closure_type = st.sidebar.selectbox("Vessel Closure Cap Material", ["Pure Beeswax Hard Plug", "Compressed Porous Cork"])
 storage_months = st.sidebar.slider("Intended Cellar Storage Duration (Months)", 0, 12, 3, step=1)
 
-st.sidebar.header("4. Cosmic Gearing & Resonator")
-planetary_body = st.sidebar.selectbox("Planetary Macro-Multiplier", ["Moon (4:3 Ratio)", "Sun (3:2 Ratio)", "Saturn/Mars (25:16 Ratio)"])
-vessel_material = st.sidebar.selectbox("Vessel Composition Matrix", ["Thick Monastic Clay", "Early Venetian Glass"])
-neck_geometry = st.sidebar.selectbox("Neck Geometry (Acoustic Transformer)", ["Cylindrical Restricted", "Exponential Flared"])
+planet_opts = ["Moon (4:3 Ratio)", "Sun (3:2 Ratio)", "Saturn/Mars (25:16 Ratio)"]
+planetary_body = st.sidebar.selectbox("Planetary Macro-Multiplier", planet_opts, index=planet_opts.index(db_planet) if db_planet in planet_opts else 1)
+vessel_opts = ["Thick Monastic Clay", "Early Venetian Glass"]
+vessel_material = st.sidebar.selectbox("Vessel Composition Matrix", vessel_opts, index=vessel_opts.index(db_vessel) if db_vessel in vessel_opts else 1)
+neck_opts = ["Cylindrical Restricted", "Exponential Flared"]
+neck_geometry = st.sidebar.selectbox("Neck Geometry (Acoustic Transformer)", neck_opts, index=neck_opts.index(db_neck) if db_neck in neck_opts else 0)
 wall_thickness = st.sidebar.slider("Wall Thickness (mm)", 2.0, 15.0, 8.0, step=0.5)
 ambient_temp = st.sidebar.slider("Storage Cellar Temperature (°C)", 0.0, 50.0, 15.0, step=1.0)
 
-# --- Automated Physics Processing Engine ---
+# --- Dynamic Automated Presets ---
 if system_mode == "Organ-Tissue Pathology":
-    active_pathology_name = pathology
     if pathology == "Neurological Overdrive (CNS Burnout)": disease_peak = 4
-    elif pathology == "Hepating Stagnation (Tissue Hardening)": disease_peak = 6
+    elif pathology == "Hepatic Stagnation (Tissue Hardening)": disease_peak = 6
     elif pathology == "Respiratory Degradation (Elasticity Loss)": disease_peak = 1
     else: disease_peak = 4
 else:
-    active_pathology_name = system_mode
-    disease_peak = 7 if system_mode == "Balneological Fluid Circuits" and "Clover" in pool_geometry else 3
+    disease_peak = 7 if system_mode == "Balneological Fluid Circuits" and "Clover" in locals() and "Clover" in pool_geometry else 3
 
+# =====================================================================
+# ⚙️ 3. CORE WAVE MECHANICS COMPUTATION ENGINE
+# =====================================================================
 f1 = 440.0 * (plant_a_factor / 0.22)
 f2 = 440.0 * (plant_b_factor / 0.22) if compounding_tier != "Single Herb Extract" else 0.0
 f3 = 440.0 * (plant_c_factor / 0.22) if compounding_tier == "Triple-Plant Envelope" else 0.0
@@ -130,7 +162,7 @@ amplitude_retention = math.exp(-alpha * storage_months) * 100.0
 
 k_val = 0.2 if vessel_material == "Thick Monastic Clay" else 0.9
 retention_hours = ((wall_thickness / 1000.0) / k_val) * 100.0
-counter_hour_idx = (disease_peak + 4) if disease_peak <= 4 else (disease_peak - 4)
+counter_hour = (disease_peak + 4) if disease_peak <= 4 else (disease_peak - 4)
 
 # Seal Boundary Measurements
 wavelength_mm = (wave_speed / target_freq) * 1000.0
@@ -138,10 +170,9 @@ r1 = 25.0
 r2 = r1 * np.sqrt(2)
 r3 = r1 * 1.618
 
-panels = ["Dawn", "Sunrise", "Morning", "Noon", "Evening", "Sunset", "Dusk", "Midnight", "Core Neutral Anchor"]
-counter_hour_name = panels[counter_hour_idx - 1]
-
-# --- Render UI Dashboard Layout ---
+# =====================================================================
+# 📊 4. USER INTERFACE GRAPHICS & DATA RENDERING
+# =====================================================================
 col1, col2 = st.columns(2)
 
 with col1:
@@ -172,49 +203,14 @@ with col1:
     
     fig, ax = plt.subplots(figsize=(6, 3.2))
     ax.plot(t, wave_y, color="#FF4B4B")
-    ax.set_facecolor('#0e1117'); fig.patch.set_facecolor('#0e1117')
+    ax.set_facecolor('#0e1117')
+    fig.patch.set_facecolor('#0e1117')
     ax.tick_params(colors='white')
     st.pyplot(fig)
 
-    # --- UI Preset Loader ---
-st.sidebar.subheader("📋 Load Reconstructed Archetype")
-saved_profiles = cursor.execute("SELECT name FROM profiles").fetchall()
-profile_list = [p[0] for p in saved_profiles]
-
-selected_profile = st.sidebar.selectbox("Choose a preset to load parameters:", ["Manual Input"] + profile_list)
-
-if selected_profile != "Manual Input":
-    data = cursor.execute("SELECT * FROM profiles WHERE name = ?", (selected_profile,)).fetchone()
-    # The application slider variables automatically sync to 'data' indices here
-
-    
-    # Patient Profile Database Input Block
-    st.markdown("---")
-    st.subheader("💾 Patient Profile Ledger")
-    patient_name = st.text_input("Enter Patient Name/Identifier:")
-    if st.button("Commit Profile to Local Ledger"):
-        if patient_name:
-            cursor.execute('''
-                INSERT INTO patient_profiles (name, pathology, fluid_medium, target_freq, counter_hour)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (patient_name, active_pathology_name, fluid_medium, round(target_freq, 2), counter_hour_name))
-            conn.commit()
-            st.success(f"Profile for '{patient_name}' compiled and secured successfully.")
-        else:
-            st.warning("Please enter a valid patient identifier.")
-            
-    # View Logs
-    if st.checkbox("Show Logged Patient Profiles"):
-        profiles = cursor.execute("SELECT name, pathology, fluid_medium, target_freq, counter_hour FROM patient_profiles").fetchall()
-        if profiles:
-            for p in profiles:
-                st.text(f"👤 {p[0]} | Path: {p[1]} | Med: {p[2]} | Freq: {p[3]}Hz | Time Slot: {p[4]}")
-        else:
-            st.caption("No profiles found in database ledger.")
-
 with col2:
     st.subheader("⏳ G-Code Machine Simulation Preview")
-    st.caption("Live feed tracing tool movements (Rapid movements vs. G02/G03 interpolations) directly inside the seal boundary.")
+    st.caption("Live feed tracing tool movements (Rapid tool travel paths vs G02/G03 loops) inside the seal boundary matrix.")
     
     # --- CNC Toolpath Visualizer Component ---
     theta_vals = np.linspace(0, 2 * np.pi, 200)
@@ -223,9 +219,13 @@ with col2:
     ax_cnc.set_facecolor('#0e1117')
     fig_cnc.patch.set_facecolor('#0e1117')
     
+    # Trace standard machine home alignment markers
     ax_cnc.scatter(0, 0, color='lime', marker='+', s=150, label='Machine Zero (X0, Y0)')
+    
+    # Simulate Rapid tool feed movement paths (G00 translation vectors)
     ax_cnc.plot([0, 0], [0, r3], color='orange', linestyle=':', alpha=0.7, label='G00 Rapid Feed Trajectory')
     
+    # Reconstruct concentric tool circular interpolations (G02/G03 loops)
     ax_cnc.plot(r3 * np.cos(theta_vals), r3 * np.sin(theta_vals), color='#FF4B4B', linewidth=1.5, label='Outer Boundary Loop (Damping Rim)')
     ax_cnc.plot(r2 * np.cos(theta_vals), r2 * np.sin(theta_vals), color='teal', linewidth=2.0, label='Middle Circle Loop (Impedance Node)')
     ax_cnc.plot(r1 * np.cos(theta_vals), r1 * np.sin(theta_vals), color='white', linewidth=2.5, label='Inner Circle Loop (Phase Core)')
@@ -236,13 +236,30 @@ with col2:
     ax_cnc.legend(labelcolor='white', loc='lower right', fontsize='small')
     st.pyplot(fig_cnc)
 
-    st.write("#### 🔘 Interactive Triple-Circle Seal SVG Blueprint")
+    st.write("#### 🔘 Scalable Vector Graphic (SVG) Blueprint Layout")
     svg_blueprint = f"""
-    <svg width="100%" height="150" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <svg width="100%" height="130" viewBox="0 0 200 200" xmlns="http://w3.org">
         <rect width="100%" height="100%" fill="#0e1117"/>
         <circle cx="100" cy="100" r="{r3 * 1.5}" stroke="#FF4B4B" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
         <circle cx="100" cy="100" r="{r2 * 1.5}" stroke="teal" stroke-width="2" fill="none"/>
         <circle cx="100" cy="100" r="{r1 * 1.5}" stroke="white" stroke-width="3" fill="none"/>
     </svg>
     """
-    st.components.v1.html(svg_blueprint, height=160)
+    st.components.v1.html(svg_blueprint, height=140)
+
+# =====================================================================
+# ⏳ 5. COSMOLOGICAL SCHEDULER TIMELINE VIEW
+# =====================================================================
+st.markdown("---")
+st.subheader("🪐 Cosmological Chrono-Shift Core Alignment Map")
+panels = ["Dawn", "Sunrise", "Morning", "Noon", "Evening", "Sunset", "Dusk", "Midnight", "Core Neutral Anchor"]
+
+c_slots = st.columns(9)
+for idx, name in enumerate(panels, 1):
+    with c_slots[idx-1]:
+        if idx == disease_peak:
+            st.error(f"🔴 P{idx}\n{name}\n[Stagnation Peak]")
+        elif idx == counter_hour:
+            st.success(f"🟢 P{idx}\n{name}\n[Infusion Vector]")
+        else:
+            st.info(f"⚪ P{idx}\n{name}\n[Baseline]")
