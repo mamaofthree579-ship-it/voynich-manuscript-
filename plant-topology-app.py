@@ -122,7 +122,7 @@ st.divider()
 stat_col1, stat_col2, stat_col3 = st.columns(3)
 stat_col1.metric("Observed Distance ($D_{JS}$)", f"{observed_djs:.5f}")
 stat_col2.metric("Null Model Mean Distance", f"{np.mean(null_distances):.5f}")
-stat_col3.metric("Empirical P-Value ($H_0$ Bound)", f"{pseudo_p_value:.4f}", inverse_trend=True)
+stat_col3.metric("Empirical P-Value ($H_0$ Bound)", f"{pseudo_p_value:.4f}")
 
 if pseudo_p_value < 0.01:
     st.success("🎉 **Isomorphism Confirmed:** The null hypothesis ($H_0$) is successfully rejected. The transition dynamics share non-random architectural structure.")
